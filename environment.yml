@@ -1,0 +1,10 @@
+name: busco-phylo
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - biopython
+  - busco
+  - mafft
+  - clipkit
+  - iqtree

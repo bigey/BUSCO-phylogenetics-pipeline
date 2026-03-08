@@ -6,7 +6,7 @@ Utility scripts to construct species phylogenies using BUSCO single copy genes. 
 
 ## History
 
-This is a fork of the original pipeline available at [GitHub](https://github.com/jamiemcg/BUSCO_phylogenomics.git), which was developed by [Jamie McGowan](https://github.com/jamiemcg/BUSCO_phylogenomics.git) and is licensed under the MIT License.
+This is a fork of the original pipeline available at [GitHub](https://github.com/jamiemcg/BUSCO_phylogenomics.git), which was developed by [Jamie McGowan](https://jamiemcgowan.ie/) and is licensed under the MIT License.
 
 It has been modified to include additional features and improvements like concordance factor analysis. Utility scripts have been added to automate the runs of BUSCO for multiple species and to run the phylogenomics pipeline with the desired parameters.
 
@@ -20,7 +20,7 @@ The following softwares and packages should be installed to run the pipeline:
 * [ClipKit](https://jlsteenwyk.com/ClipKIT/)
 * [IQ-TREE](https://iqtree.github.io/)
 
-The simple way is to create a conda environment where all the dependencies are installed. A `environment.yml` file is provided for this purpose. You can create the conda environment with the following command:
+The simple way is to create a conda environment where all the dependencies are installed. A `environment.yml` file is provided for this purpose. You can create a conda environment with the following command:
 
 ```shell
 conda env create -f environment.yml
@@ -141,7 +141,7 @@ BibTeX
   author       = {Bigey, Frédéric},
   title        = {BUSCO Phylogenomics pipeline},
   year         = {2026},
-  howpublished = {\url{https://github.com/bigey/busco-phylo}},
+  howpublished = {\url{https://github.com/bigey/BUSCO-phylogenetics-pipeline}},
   note         = {accessed 2026-03-08}
 }
 ```
@@ -153,8 +153,7 @@ Biblatex
   author       = {Bigey, Frédéric},
   title        = {BUSCO Phylogenomics pipeline},
   year         = {2026},
-  version      = {v1.0.0},
-  url          = {https://github.com/bigey/busco-phylo},
+  url          = {https://github.com/bigey/BUSCO-phylogenetics-pipeline},
   note         = {accessed 2026-03-08}
 }
 ```
