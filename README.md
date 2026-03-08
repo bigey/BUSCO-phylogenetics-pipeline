@@ -79,14 +79,14 @@ To run both supermatrix and supertree methods and perform concordance factor ana
 python3 BUSCOphylo.py --directory BUSCO_RESULTS --output OUTPUT_DIRECTORY --supermatrix --supertree --concordance --threads 8
 ```
 
-The resulting supermatrix species tree (in newick format) is labeled with gene concordance factors (gCF and sCF), which represent the proportion of gene trees that support each branch in the species tree. This can provide insights into the level of gene tree discordance and the robustness of the inferred species tree.
+The resulting supermatrix species tree (in newick format) is labeled with gene and sequence concordance factors (`gCF` and `sCF`). This can provide insights into the level of gene tree discordance and the robustness of the inferred species tree.
 
 At the end of the run, you will find the resulting alignments and trees in the `OUTPUT_DIRECTORY` directory:
 
-* `SUPERMATRIX.aln.fasta`: the concatenated alignment and the resulting supermatrix species tree.
-* `ALL.trees`: the concatenated individual gene trees for each single-copy BUSCO protein family.
-* `SUPERMATRIX.treefile`: the resulting supermatrix species tree with bootstrap support values (newick format).
-* `SUPERMATRIX.treefile.cf.tree`: the supermatrix tree labeled with gene concordance factors (gCF) and sequence concordance factors (sCF) values.
+* `SUPERMATRIX.aln.fasta`: the concatenated supermatrix alignment,
+* `ALL.trees`: the concatenated family protein trees,
+* `SUPERMATRIX.treefile`: the supermatrix tree with bootstrap support values (in newick format).
+* `SUPERMATRIX.treefile.cf.tree`: the supermatrix tree labeled with gene and sequence concordance factors (gCF, sCF).
 
 Branch labels in the `SUPERMATRIX.treefile.cf.tree` file are formatted as follows:
 
