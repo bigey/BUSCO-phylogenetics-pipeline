@@ -2,7 +2,7 @@
 
 ## Presentation
 
-Utility scripts to construct species phylogenies using BUSCO single copy genes. Works directly from BUSCO outputs and can be used for supermatrix or supertree/coalescent methods. The program will automatically identify single-copy BUSCO proteins, generate alignments (`MAFFT`) and trim (`CLipKit`) them. Then it either concatenates them into a supermatrix to infer the species-tree phylogeny using `IQ-TREE` or generate individual gene trees for a supertree approach. The program can also perform gene and sequence concordance factor (gCF and sCF) analysis if both supermatrix and supertree methods are selected (`--concordance`).
+The script `BUSCOphylo.py` is used to construct species phylogenies using BUSCO single copy proteins. It works directly from BUSCO outputs and can be used for supermatrix or supertree/coalescent methods. The program will automatically identify single-copy BUSCO proteins, generate alignments using `MAFFT` and `CLipKit`. Then it either concatenates them into a supermatrix fasta fileto infer the species-tree phylogeny using `IQ-TREE` or generate individual trees for a supertree approach. The program can also perform gene and sequence concordance factors (gCF and sCF) analysis if both supermatrix and supertree methods are selected (`--concordance`).
 
 ## History
 
@@ -28,21 +28,24 @@ conda env create -f environment.yml
 
 ## Usage
 
-For each species, BUSCO creates a directory containing all the results needed to perform the analysisa. Inside this directory, there are several sub-directories, but the one we are interested in is `run_[lineage]_odb[XX]`, which contains the single-copy BUSCO protein sequences in fasta format. In order to centralize the BUSCO results for multiple species, create a new directory (`BUSCO_RESULTS`) and link all the `run_[lineage]_odb[XX]` sub-directories to this directory. The link name should start by `run_` then folowed by the name of the species.
+For each species, BUSCO creates a directory containing all the results needed to perform the analysis. Inside this directory, there are several sub-directories, but the one we are interested in is `run_[lineage]_odb[XX]`, which contains the single-copy BUSCO protein sequences in fasta format. In order to centralize the all the BUSCO files for multiple species analysis, create a new directory (`BUSCO_RESULTS`) and link all the `run_[lineage]_odb[XX]` sub-directories to this directory. Link names should start by `run_`, then folowed by the name of the species `species1`.
 
-This directory should have the following structure and naming convention:
+Exemple of the directory structure:
 
-* run_[species1] -> link to BUSCO `run_[lineage]_odb[XX]` sub-directory for species1
-* run_[species2] -> link to BUSCO `run_[lineage]_odb[XX]` sub-directory for species2
-* run_[species3] -> link to BUSCO `run_[lineage]_odb[XX]` sub-directory for species3
-* run_[species4] -> link to BUSCO `run_[lineage]_odb[XX]` sub-directory for species4
-* run_[species5] -> link to BUSCO `run_[lineage]_odb[XX]` sub-directory for species5
-* run_[species6] -> link to BUSCO `run_[lineage]_odb[XX]` sub-directory for species6
-* etc.
+```shell
+$ tree BUSCO_RESULTS/
+BUSCO_RESULTS/
+├── run_species1 -> /path/to/BUSCO_dir_species1/run_[lineage]_odb[XX]
+├── run_species2 -> /path/to/BUSCO_dir_species2/run_[lineage]_odb[XX]
+├── run_species3 -> /path/to/BUSCO_dir_species3/run_[lineage]_odb[XX]
+├── run_species4 -> /path/to/BUSCO_dir_species4/run_[lineage]_odb[XX]
+├── run_species5 -> /path/to/BUSCO_dir_species5/run_[lineage]_odb[XX]
+├── run_species6 -> /path/to/BUSCO_dir_species6/run_[lineage]_odb[XX]
+```
 
-Then you can use this directory as the input for the phylogenomics pipeline.
+Then you can use this directory as the input for `BUSCOphylo.py` script with the `--directory` option.
 
-The utility script `1.run_busco_genome_mode.sh` can be used to automate running BUSCO for a list of species, given a directory containing all the genome sequences (fasta format, *.fasta). It generates the required directory structure for the phylogenomics pipeline.
+The utility script `1.run_busco_genome_mode.sh` can be used to automate running BUSCO for a set of genomes present in a given directory (in fasta format, *.fasta). See below for more details on how to use this script.
 
 ### Supermatrix method
 
@@ -76,7 +79,20 @@ To run both supermatrix and supertree methods and perform concordance factor ana
 python3 BUSCOphylo.py --directory BUSCO_RESULTS --output OUTPUT_DIRECTORY --supermatrix --supertree --concordance --threads 8
 ```
 
-The resulting supermatrix species tree is labeled with gene concordance factors (gCF and sCF), which represent the proportion of gene trees that support each branch in the species tree. This can provide insights into the level of gene tree discordance and the robustness of the inferred species tree.
+The resulting supermatrix species tree (in newick format) is labeled with gene concordance factors (gCF and sCF), which represent the proportion of gene trees that support each branch in the species tree. This can provide insights into the level of gene tree discordance and the robustness of the inferred species tree.
+
+At the end of the run, you will find the resulting alignments and trees in the `OUTPUT_DIRECTORY` directory:
+
+* `SUPERMATRIX.aln.fasta`: the concatenated alignment and the resulting supermatrix species tree.
+* `ALL.trees`: the concatenated individual gene trees for each single-copy BUSCO protein family.
+* `SUPERMATRIX.treefile`: the resulting supermatrix species tree with bootstrap support values (newick format).
+* `SUPERMATRIX.treefile.cf.tree`: the supermatrix tree labeled with gene concordance factors (gCF) and sequence concordance factors (sCF) values.
+
+Branch labels in the `SUPERMATRIX.treefile.cf.tree` file are formatted as follows:
+
+`(species1:branch_length,species2:branch_length)bootstrap/gCF/sCF:branch_length,`
+
+Where `bootstrap` is the bootstrap support value for the branch, `gCF` is the gene concordance factor, and `sCF` is the sequence concordance factor (percentage). Values are separated by slashes (`/`) and the branch length (float) is indicated after the colon (`:`).
 
 ### `BUSCOphylo.py` required parameters
 
@@ -95,15 +111,15 @@ The resulting supermatrix species tree is labeled with gene concordance factors 
 
 ## Running BUSCO for multiple species
 
-An utility script is provided to automate the runs of BUSCO for a list of species, given a directory containing all the genome sequences (fasta format). It generates the required input directory structure for the phylogenomics pipeline.
+An utility script is provided to automate the runs of BUSCO for a set of genomes present in a given directory (in fasta format, *.fasta). It generates the required input directory structure for the phylogenomics pipeline.
 
 Adapt the parameters in `1.run_busco_genome_mode.sh`:
 
 ```shell
-GENOME_DIR="Genomes"           # Directory containing genome sequences in fasta format, should be named `species1.fasta`, `species2.fasta`, etc.
+GENOME_DIR="Genomes"           # Directory containing the sequences (fasta), should be named `species1.fasta`, `species2.fasta`, etc.
 BUSCO_RESULTS="Busco-results"  # Directory where BUSCO results will be centralized, will contain symbolic links to the per-species BUSCO result directories
 LINEAGE="saccharomycetes"      # Set the appropriate lineage for your species, see BUSCO documentation for available lineages, (or command line: busco --list-datasets)
-PREDICTOR="metaeuk"            # Select an appropriate gene predictor for BUSCO genome mode, options are: miniprot, metaeuk, augustus.
+PREDICTOR="metaeuk"            # Select an appropriate gene predictor for BUSCO genome mode (options: miniprot, metaeuk, augustus)
 THREADS=16                     # Number of threads to use for BUSCO runs
 ```
 
@@ -113,15 +129,18 @@ Then run the script:
 bash 1.run_busco_genome_mode.sh
 ```
 
-The script will run BUSCO for each genome in `GENOME_DIR` and create symbolic links to the BUSCO result directories in `BUSCO_RESULTS`. You can then use `BUSCO_RESULTS` as the input directory for the phylogenomics pipeline.
+The script will run BUSCO for each genome in `GENOME_DIR` and create symbolic links to the BUSCO result directories in `BUSCO_RESULTS`. You can then use `--directory BUSCO_RESULTS` to run the the phylogenomics script `BUSCOphylo.py`.
 
 ## Running the phylogenomics pipeline
 
-The second script `2.run_phylo_pipeline.sh` is a wrapper to run the phylogenomics pipeline with the desired parameters. Adapt the parameters in the script:
+The second helper script `2.run_phylo_pipeline.sh` is a wrapper to run the phylogenomics pipeline with the desired parameters.
+
+Adapt the parameters in the script:
 
 ```shell
-BUSCO_RESULTS="Busco-results" # Directory containing the centralized BUSCO results, should be the same as the output from the previous script
-OUT_PHYLO_DIR="Phylogenetics" # Directory where phylogenetic results will be saved
+BUSCO_RESULTS="Busco-results" # Directory containing the centralized BUSCO results (with links to the per-species BUSCO result directories)
+OUT_PHYLO_DIR="Phylogenetics" # Directory where phylogenetic results will be saved (see above for the output files generated by the pipeline)
+THREADS=16                    # Number of threads you want to allocate for the phylogenomic pipeline
 ```
 
 Then run the script:
@@ -132,7 +151,7 @@ bash 2.run_phylo_pipeline.sh
 
 ## Citation
 
-If you use this document or script in your research, please cite:
+If you use this code in your research, please cite:
 
 BibTeX
 
