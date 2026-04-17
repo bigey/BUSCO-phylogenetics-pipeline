@@ -11,6 +11,7 @@
 #   - ClipKit
 #   - IQ-TREE
 
+# from operator import mod
 import os
 import sys
 import argparse
@@ -138,7 +139,7 @@ def main():
         else:
             print_message(str(len(single_copy_buscos)) + " BUSCOs are single copy in all " + str(len(all_species)) + " species")
     else:
-        # Identify BUSCOs that are single copy and present in psc% of species
+        # Identify BUSCOs that are single copy and present in above % of species
         psc = percent_single_copy
 
         for busco in buscos:
@@ -168,7 +169,7 @@ def main():
         mp_commands.append([os.path.join(working_directory, "proteins", busco + ".faa"), os.path.join(working_directory, "alignments", busco + ".aln.fasta")])
 
     pool = mp.Pool(processes=threads)
-    results = pool.map(run_mafft, mp_commands)
+    pool.map(run_mafft, mp_commands)
 
     # Trim alignments with ClipKit
     print_message("Trimming alignments using ClipKit to: ", os.path.join(working_directory, "trimmed_alignments"))
@@ -177,11 +178,11 @@ def main():
         mp_commands.append([os.path.join(working_directory, "alignments", busco + ".aln.fasta"), os.path.join(working_directory, "trimmed_alignments", busco + ".trimmed.aln.fasta")])
 
     pool = mp.Pool(processes=threads)
-    results = pool.map(run_clipkit, mp_commands)
+    pool.map(run_clipkit, mp_commands)
 
     print_message("Alignment and trimming complete!")
 
-    # Compute supermatrix
+    # Compute Supermatrix
     if supermatrix:
         print_message("Beginning SUPERMATRIX analysis...")
         print_message("Concatenating all trimmed alignments for SUPERMATRIX analysis...")
@@ -189,29 +190,41 @@ def main():
         os.chdir(os.path.join(working_directory, "trimmed_alignments"))
         alignments = {}
 
+        # Initialize alignments dictionary with all species as keys and empty strings as values
         for species in all_species:
             alignments[species] = ""
 
-        # if psc isn't set, or is == 100, we can simple just concatenate alignments
-        if args.psc is None:
+        # If percent_single_copy is 1.0, we can simple just concatenate alignments
+        if percent_single_copy ==1.0:
             for alignment in os.listdir("."):
+                # For each alignment file, 
+                #  append the sequence to the corresponding species in the alignments dictionary
                 for record in SeqIO.parse(alignment, "fasta"):
                     alignments[str(record.id)] += str(record.seq)
+        
+        # Else, we need to check if a species is missing from a family, 
+        # if so append with "-" to represent missing data
         else:
-            # We need to check if a species is missing from a family, if so append with "-" to represent missing data
             for alignment in os.listdir("."):
-                # Keep track of which species are present and missing
-                check_species = all_species[:]
+                # Keep track of which species are present or missing
+                missing_species = all_species[:]
 
                 for record in SeqIO.parse(alignment, "fasta"):
                     alignments[str(record.id)] += str(record.seq)
-                    check_species.remove(str(record.id))
+                    missing_species.remove(str(record.id))
 
-                if len(check_species) > 0:
-                    # There are missing species, fill with N * "?"
-                    seq_len = len(str(record.seq))
-                    for species in check_species:
-                        alignments[species] += ("?" * seq_len)
+                if len(missing_species) > 0:
+                    # There are missing species,
+                    #  we need to fill in the alignment with "-" 
+                    #  for those species to represent missing data
+                    
+                    # Get the length of the alignment
+                    first = next(SeqIO.parse(alignment, "fasta")).seq
+                    seq_len = len(str(first))
+                     
+                    for species in missing_species:
+                        #  Fill with N * "-" 
+                        alignments[species] += ("-" * seq_len)
 
         # Write supermatrix alignment to file
         os.chdir(working_directory)
@@ -220,18 +233,21 @@ def main():
             fo.write(">" + species + "\n")
             fo.write(alignments[species] + "\n")
         fo.close()
-        print_message("Supermatrix alignment is " + str(len(alignments[species])) + " amino acids in length")
+        
+        # All alignments should be the same length, so we can just check the length of the first one
+        first_align = next(iter(alignments.values()))
+        print_message("Supermatrix alignment is " + str(len(first_align)) + " amino acids in length")
 
         if stop_early:
             print_message("Stopping here as requested with --stop-early. Exiting.")
             sys.exit(0)
 
         print_message("Reconstructing species phylogeny using IQ-TREE: tree will go to SUPERMATRIX.aln.fasta.treefile")
-        os.system(f"iqtree -s SUPERMATRIX.aln.fasta --quiet --mset {model} --ufboot 1000 -T AUTO --threads-max {threads} >/dev/null 2>&1")
+        os.system(f"iqtree3 -s SUPERMATRIX.aln.fasta --quiet --mset {model} --ufboot 1000 -T AUTO --threads-max {threads} >/dev/null 2>&1")
 
         print_message("SUPERMATRIX phylogeny construction complete! See treefile: SUPERMATRIX.aln.fasta.treefile")
 
-    # Compute supertree
+    # Compute Supertree
     if supertree:
         print_message("Beginning SUPERTREE analysis...")
         print_message("Generating phylogenies using IQ-TREE for each BUSCO family for SUPERTREE analysis...")
@@ -242,7 +258,7 @@ def main():
             mp_commands.append([os.path.join("trimmed_alignments", busco + ".trimmed.aln.fasta"), model])
 
         pool = mp.Pool(processes=threads)
-        results = pool.map(run_iqtree, mp_commands)
+        pool.map(run_iqtree, mp_commands)
 
         # Move all IQ-TREE generated files to trees folder
         os.chdir(working_directory)
@@ -257,11 +273,15 @@ def main():
 
     if concordance:
         print_message("Calculating gene and site concordance factors (gCF and sCF) for SUPERMATRIX tree...")
-
         os.chdir(working_directory)
-        os.system("iqtree --quiet -t SUPERMATRIX.aln.fasta.treefile -s SUPERMATRIX.aln.fasta --gcf ALL.trees --scf 1000 -T AUTO >/dev/null 2>&1")
+        
+        print_message("Calculating gCF...")
+        os.system("iqtree3 --quiet -t  SUPERMATRIX.aln.fasta.treefile --gcf ALL.trees --prefix gcf -T 1 >/dev/null 2>&1")
+        
+        print_message("Calculating sCF...")
+        os.system(f"iqtree3 --quiet -te SUPERMATRIX.aln.fasta.treefile -s SUPERMATRIX.aln.fasta --scfl 1000 --prefix scf -T AUTO --threads-max {threads} >/dev/null 2>&1")
 
-        print_message("gCF and sCF calculation complete! See SUPERMATRIX.aln.fasta.treefile.cf.tree for annotated treefile.")
+        print_message("gCF and sCF calculation complete! See gcf.*/scf.* for annotated treefile.")
 
     # Final message
     print_message("BUSCO phylogenomics pipeline complete!")
@@ -272,8 +292,10 @@ def run_mafft(io):
 def run_clipkit(io):
     os.system("clipkit " + io[0] + " --quiet --mode smart-gap --output " + io[1])
 
-def run_iqtree(io, model):
-    os.system(f"iqtree --quiet --mset {model} --ufboot 1000 -T 1 -s {io[0]}")
+def run_iqtree(param):
+    alignment = param[0]
+    model = param[1]
+    os.system(f"iqtree3 --quiet -s {alignment} --mset {model} --ufboot 1000 -T 1")
 
 def print_message(*message):
     print(strftime("%d-%m-%Y %H:%M:%S", gmtime()) + "\t" + " ".join(map(str, message)))

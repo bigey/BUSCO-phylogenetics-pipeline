@@ -126,7 +126,7 @@ THREADS=16                     # Number of threads to use for BUSCO runs
 Then run the script:
 
 ```shell
-bash 1.run_busco_genome_mode.sh
+bash -i 1.run_busco_genome_mode.sh
 ```
 
 The script will run BUSCO for each genome in `GENOME_DIR` and create symbolic links to the BUSCO result directories in `BUSCO_RESULTS`. You can then use `--directory BUSCO_RESULTS` to run the the phylogenomics script `BUSCOphylo.py`.
@@ -146,7 +146,7 @@ THREADS=16                    # Number of threads you want to allocate for the p
 Then run the script:
 
 ```shell
-bash 2.run_phylo_pipeline.sh
+bash -i 2.run_phylo_pipeline.sh
 ```
 
 ## Citation

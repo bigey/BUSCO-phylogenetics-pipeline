@@ -42,7 +42,7 @@ THREADS=16
 mkdir -p ${BUSCO_RESULTS}
 
 # Use a conda environment where all the required software are installed
-conda activate busco-phylo
+conda activate busco-6.0.0
 
 for genome in $GENOME_DIR/*.fasta; do
     PREFIX=$(basename ${genome} .fasta)
@@ -64,9 +64,10 @@ for genome in $GENOME_DIR/*.fasta; do
     
     # Create a corresponding link to the BUSCO results directory
     cd ${BUSCO_RESULTS}
-    ln -s ../${OUT_DIR}/run_${LINEAGE}_odb* -t run_${PREFIX}
+    ln -s ../${OUT_DIR}/run_${LINEAGE}_odb* run_${PREFIX}
     cd ..
 done
 
 conda deactivate
 echo "done"
+

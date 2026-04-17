@@ -1,10 +1,10 @@
-name: busco-phylo
+name: busco-6.0.0
 channels:
   - bioconda
   - conda-forge
 dependencies:
   - biopython
-  - busco
+  - busco>=6.0.0
   - mafft
   - clipkit
-  - iqtree
+  - iqtree>=3.0
