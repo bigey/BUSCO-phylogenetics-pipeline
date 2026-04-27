@@ -14,7 +14,7 @@ PREFIX="SUPERMATRIX" # Prefix for output files (e.g., SUPERMATRIX.treefile, SUPE
 EVOL_MODEL="LG"  # Evolutionary model for tree inference (e.g., LG, JTT, WAG, etc.)
 THREADS=128 # Number of threads to use for IQ-TREE (adjust based on your system's capabilities)
 
-conda activate busco-6.0.0
+conda activate busco-phylo
 
 cd $PHYLO_DIR
 

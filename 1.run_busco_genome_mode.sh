@@ -42,7 +42,7 @@ THREADS=16
 mkdir -p ${BUSCO_RESULTS}
 
 # Use a conda environment where all the required software are installed
-conda activate busco-6.0.0
+conda activate busco-phylo
 
 for genome in $GENOME_DIR/*.fasta; do
     PREFIX=$(basename ${genome} .fasta)

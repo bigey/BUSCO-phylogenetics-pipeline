@@ -17,7 +17,8 @@ The following softwares and packages should be installed to run the pipeline:
 * [Python3](https://www.python.org/)
 * [BioPython](https://biopython.org/)
 * [MAFFT](https://mafft.cbrc.jp/alignment/software/)
-* [ClipKit](https://jlsteenwyk.com/ClipKIT/)
+* [ClipKIT](https://jlsteenwyk.com/ClipKIT/)
+* [PhyKIT](https://jlsteenwyk.com/PhyKIT/)
 * [IQ-TREE](https://iqtree.github.io/)
 
 The simple way is to create a conda environment where all the dependencies are installed. A `environment.yml` file is provided for this purpose. You can create a conda environment with the following command:

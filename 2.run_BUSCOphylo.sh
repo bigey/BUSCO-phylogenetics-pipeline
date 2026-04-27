@@ -5,7 +5,7 @@ BUSCO_RESULTS="Busco-results"
 OUT_PHYLO_DIR="Phylogenomics"
 THREADS=64
 
-conda activate busco-6.0.0
+conda activate busco-phylo
 
 # It is sometimes required to unset the MAFFT_BINARIES environment variable to allow BUSCOphylo.py to find the correct MAFFT executable
 unset MAFFT_BINARIES

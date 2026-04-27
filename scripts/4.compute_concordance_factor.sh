@@ -17,7 +17,7 @@ INDIVIDUAL_TREES="ALL.trees"
 EVOL_MODEL="LG"
 THREADS=64
 
-conda activate busco-6.0.0
+conda activate busco-phylo
 
 cd $IN_PHYLO_DIR
 
