@@ -30,7 +30,7 @@ def main():
     parser.add_argument("--concordance", action="store_true", default=False, help="Calculate concordance factors (gCF and sCF) for phylogenetic trees, automatic turn on --supermatrix and --supertree if not already selected")
     parser.add_argument("--stop-early", action="store_true", default=False, help="Stop pipeline early after generating datasets (before phylogeny inference), only relevant if --supermatrix method is selected, incompatible with --concordance")
     parser.add_argument("--percent-single-copy", type=float, default=1.0, help="Only keep BUSCO genes present in single copy in at least this fraction of the species (default 1.0, i.e. 100%)")
-    parser.add_argument("--model", type=str, default="LG", help="Protein evolution model to use for IQ-TREE phylogeny inference (see IQ-TREE documentation, default to LG model)")
+    parser.add_argument("--model", type=str, default="LG+R4+F", help="Protein evolution model to use for tree inference (see IQ-TREE documentation, default to LG+R4+F model)")
     parser.add_argument("--threads", type=int, default=8, help="Number of threads to use (default 8)")
     parser.add_argument("--directory", type=str, help="Directory containing completed BUSCO runs", required=True)
     parser.add_argument("--output", type=str, help="Output directory to store results", required=True)
@@ -64,10 +64,6 @@ def main():
 
     if not supermatrix and not supertree:
         print("Error! Please select at least one of '--supermatrix' or '--supertree'")
-        sys.exit(1)
-
-    if model not in ["Model","Blosum62","cpREV","Dayhoff","DCMut","EAL","ELM","FLAVI","FLU","GTR20","HIVb","HIVw","JTT","JTTDCMut","LG","mtART","mtMAM","mtREV","mtZOA","mtMet","mtVer","mtInv","NQ.bird","NQ.insect","NQ.mammal","NQ.pfam","NQ.plant","NQ.yeast","Poisson","PMB","Q.bird","Q.insect","Q.mammal","Q.pfam","Q.plant","Q.yeast","rtREV","VT","WAG"]:
-        print("Error! Specified model " + model + " is not supported by IQ-TREE. See IQ-TREE documentation for supported models.")
         sys.exit(1)
     
     # Check input directory exists
@@ -243,7 +239,7 @@ def main():
             sys.exit(0)
 
         print_message("Reconstructing species phylogeny using IQ-TREE: tree will go to SUPERMATRIX.aln.fasta.treefile")
-        os.system(f"iqtree3 -s SUPERMATRIX.aln.fasta --quiet --mset {model} --ufboot 1000 -T AUTO --threads-max {threads} >/dev/null 2>&1")
+        os.system(f"iqtree3 -s SUPERMATRIX.aln.fasta --quiet -m {model} -T {threads} --ufboot 1000 >/dev/null 2>&1")
 
         print_message("SUPERMATRIX phylogeny construction complete! See treefile: SUPERMATRIX.aln.fasta.treefile")
 
@@ -279,7 +275,7 @@ def main():
         os.system("iqtree3 --quiet -t  SUPERMATRIX.aln.fasta.treefile --gcf ALL.trees --prefix gcf -T 1 >/dev/null 2>&1")
         
         print_message("Calculating sCF...")
-        os.system(f"iqtree3 --quiet -te SUPERMATRIX.aln.fasta.treefile -s SUPERMATRIX.aln.fasta --scfl 1000 --prefix scf -T AUTO --threads-max {threads} >/dev/null 2>&1")
+        os.system(f"iqtree3 --quiet -te SUPERMATRIX.aln.fasta.treefile -s SUPERMATRIX.aln.fasta -m {model} --scfl 1000 --prefix scf -T {threads} >/dev/null 2>&1")
 
         print_message("gCF and sCF calculation complete! See gcf.*/scf.* for annotated treefile.")
 
@@ -295,7 +291,7 @@ def run_clipkit(io):
 def run_iqtree(param):
     alignment = param[0]
     model = param[1]
-    os.system(f"iqtree3 --quiet -s {alignment} --mset {model} --ufboot 1000 -T 1")
+    os.system(f"iqtree3 --quiet -s {alignment} -m {model} --ufboot 1000 -T 1")
 
 def print_message(*message):
     print(strftime("%d-%m-%Y %H:%M:%S", gmtime()) + "\t" + " ".join(map(str, message)))

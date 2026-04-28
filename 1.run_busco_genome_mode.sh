@@ -11,7 +11,7 @@ GENOME_DIR=Genomes
 
 # Directory to store BUSCO results. 
 # Will contain one subdirectory per genome
-BUSCO_RESULTS="Busco-results"
+BUSCO_RESULTS="BUSCO-results"
 
 # Choose a lineage dataset for BUSCO.
 # See documentation for available lineages (https://busco.ezlab.org/busco_userguide.html)
