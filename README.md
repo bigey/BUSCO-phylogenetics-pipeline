@@ -6,6 +6,11 @@ The following scripts are used to construct species phylogenies using BUSCO sing
 
 The pipeline is designed to perform sensitivity analysis by evaluating the impact of the number of genes included in the analysis on the resulting species tree topology. It computes several metrics for each gene tree (alignment length, average bipartition support, relative composition variability, median long branch score, treeness, saturation, and treeness/RCV ratio) and subsets the genes based on the specified metric and fraction (e.g., top 25% of genes based on alignment length). Then it infers new trees using the subseted genes and compares the resulting trees to a reference tree (in this case, the supermatrix tree) using the Robinson-Foulds distance metric. This allows to evaluate how the number of genes included in the analysis impacts the resulting species tree topology.
 
+## Version
+
++ v1.0 (2026-03-08): Initial release, including supermatrix and supertree methods, concordance factor computation.
++ v2.0 (2026-04-28): Added gene sensitivity analysis, including gene metrics computation and tree comparison using Robinson-Foulds distance.
+
 ## History
 
 Script `busco-phylo.py` is derived from the original pipeline available at [GitHub](https://github.com/jamiemcg/BUSCO_phylogenomics.git), which was developed by [Jamie McGowan](https://jamiemcgowan.ie/) and is licensed under the MIT License. It has been modified to include additional features and improvements like concordance factor analysis. 
@@ -236,7 +241,7 @@ BibTeX
   title        = {BUSCO Phylogenomics pipeline},
   year         = {2026},
   howpublished = {\url{https://github.com/bigey/BUSCO-phylogenetics-pipeline}},
-  note         = {accessed 2026-03-08}
+  note         = {accessed 2026-XX-XX}
 }
 ```
 
@@ -248,6 +253,6 @@ Biblatex
   title        = {BUSCO Phylogenomics pipeline},
   year         = {2026},
   url          = {https://github.com/bigey/BUSCO-phylogenetics-pipeline},
-  note         = {accessed 2026-03-08}
+  note         = {accessed 2026-XX-XX}
 }
 ```
