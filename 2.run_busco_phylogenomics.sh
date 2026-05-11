@@ -16,6 +16,6 @@ unset MAFFT_BINARIES
 #   --supertree option will generate individual gene trees and then concatenate them
 #   --concordance option is used to calculate gene concordance factors for the supermatrix phylogeny
 
-python3 BUSCOphylo.py --directory ${BUSCO_RESULTS} --output ${OUT_PHYLO_DIR} --model ${MODEL} --supermatrix --supertree --concordance --threads ${THREADS}
+python3 busco-phylo.py --directory ${BUSCO_RESULTS} --output ${OUT_PHYLO_DIR} --model ${MODEL} --supermatrix --supertree --concordance --threads ${THREADS}
 
 conda deactivate

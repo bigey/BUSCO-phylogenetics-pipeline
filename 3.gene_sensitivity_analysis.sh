@@ -5,7 +5,7 @@ TRIMMED_ALIGNMENTS="Phylogenomics/trimmed_alignments"
 TREES_DIR="Phylogenomics/trees"
 OUTPUT_DIR="Phylogenomics"
 MODEL="LG+R4+F"
-TOP_FRACTION="0.50"
+TOP_FRACTION="0.75"
 THREADS=64
 
 conda activate busco-phylo
@@ -15,14 +15,14 @@ conda activate busco-phylo
 #    compute several metrics related to the information content of each gene, 
 #    such as the number of informative sites, tree length, and other relevant statistics. 
 # The results will be saved in a TSV file for further analysis.
-# python3 compute-gene-metrics.py \
-#     --trimmed-alignments ${TRIMMED_ALIGNMENTS} \
-#     --trees ${TREES_DIR} \
-#     --output ${OUTPUT_DIR}/gene-metrics.tsv \
-#     --threads ${THREADS}
+python3 compute-gene-metrics.py \
+    --trimmed-alignments ${TRIMMED_ALIGNMENTS} \
+    --trees ${TREES_DIR} \
+    --output ${OUTPUT_DIR}/gene-metrics.tsv \
+    --threads ${THREADS}
 
 # We plot the results and generate a PDF file with the visualizations of the metric distributions.
-# python3 plot-gene-metrics.py --input ${OUTPUT_DIR}/gene-metrics.tsv --output ${OUTPUT_DIR}/gene-metrics.pdf
+python3 plot-gene-metrics.py --input ${OUTPUT_DIR}/gene-metrics.tsv --output ${OUTPUT_DIR}/gene-metrics.pdf
 
 # Determine if the phylogenetic trees inferred using subsampling differ from the species/referece tree. 
 # We will perform a sensitivity analysis to assess how the choice of genes 

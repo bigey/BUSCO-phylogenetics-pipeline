@@ -53,8 +53,8 @@ def main():
         help="Output directory to store results (must not already exist)"
     )
     parser.add_argument(
-        "--top-fraction", type=float, default=0.9,
-        help="Fraction of top-scoring genes to retain per metric (default: 0.9 = top 90%%)"
+        "--top-fraction", type=float, default=0.75,
+        help="Fraction of top-scoring genes to retain per metric (default: 0.75 = top 75%%)"
     )
     parser.add_argument(
         "--model", type=str, default="LG+R4+F",

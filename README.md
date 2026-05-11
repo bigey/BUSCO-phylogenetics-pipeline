@@ -4,12 +4,12 @@
 
 The following scripts are used to construct species phylogenies using BUSCO single copy proteins. It works directly from BUSCO outputs and can be used for supermatrix or supertree/coalescent methods. The program will automatically identify single-copy BUSCO proteins, generate alignments using `MAFFT` and `ClipKIT`. Then it either concatenates them into a supermatrix fasta fileto infer the species-tree phylogeny using `IQ-TREE` or generate individual trees for a supertree approach. The program can also perform gene and sequence concordance factors (gCF and sCF) analysis if both supermatrix and supertree methods are selected (`--concordance`). The resulting supermatrix species tree (in newick format) is labeled with gene and sequence concordance factors (`gCF` and `sCF`). This can provide insights into the level of gene tree discordance and the robustness of the inferred species tree. 
 
-The pipeline is designed to perform sensitivity analysis by evaluating the impact of the number of genes included in the analysis on the resulting species tree topology. It computes several metrics for each gene tree (alignment length, average bipartition support, relative composition variability, median long branch score, treeness, saturation, and treeness/RCV ratio) and subsets the genes based on the specified metric and fraction (e.g., top 25% of genes based on alignment length). Then it infers new trees using the subseted genes and compares the resulting trees to a reference tree (in this case, the supermatrix tree) using the Robinson-Foulds distance metric. This allows to evaluate how the number of genes included in the analysis impacts the resulting species tree topology.
+The pipeline is designed to perform sensitivity analysis by evaluating the impact of the number of genes included in the analysis on the resulting species tree topology. It computes several metrics for each gene tree (alignment length, average bipartition support, relative composition variability, median long branch score, treeness, saturation, and treeness/RCV ratio) and subsets the genes based on the specified metric and fraction (e.g., top 75% of genes based on alignment length). Then it infers new trees using the subseted genes and compares the resulting trees to a reference tree (in this case, the supermatrix tree) using the Robinson-Foulds distance metric. This allows to evaluate how the number of genes included in the analysis impacts the resulting species tree topology.
 
 ## Version
 
-+ v1.0 (2026-03-08): Initial release, including supermatrix and supertree methods, concordance factor computation.
 + v2.0 (2026-04-28): Added gene sensitivity analysis, including gene metrics computation and tree comparison using Robinson-Foulds distance.
++ v1.0 (2026-03-08): Initial release, including supermatrix and supertree methods, concordance factor computation.
 
 ## History
 
@@ -171,8 +171,8 @@ Adapt the parameters in the script:
 TRIMMED_ALIGNMENTS="Phylogenetics/trimmed-alignments" # Directory containing the trimmed alignments for each gene (output of the phylogenomics pipeline, step 2)
 TREES_DIR="Phylogenetics/trees"                       # Directory containing the gene trees for each gene (output of the phylogenomics pipeline, step 2)
 OUTPUT_DIR="Gene-sensitivity-analysis"                # Directory where gene sensitivity analysis results will be saved
-TOP_FRACTION=0.25                                     # Set the fraction of genes to include in the analysis (e.g., 0.25 for top 25% of best scoring genes)
-MODEL="LG+R4+F"                                       # Set the protein evolution model to use for IQ-TREE phylogeny inference (see documentation for available models)
+TOP_FRACTION=0.75                                     # Set the fraction of genes to include in the analysis (e.g., 0.75 for top 75% of best scoring genes)
+MODEL="LG+R4+F"                                       # Set the protein evolution model to use for IQ-TREE phylogeny inference (see IQ-TREE documentation for available models)
 THREADS=64                                            # Set the number of threads you want to allocate for the phylogenomic pipeline
 ```
 
@@ -181,7 +181,7 @@ Then run the script:
 ```shell
 bash -i 3.run_gene_sensitivity_analysis.sh
 ```
-The script will first compute several metrics for each gene tree (alignment length, average bipartition support, relative composition variability, median long branch score, treeness, saturation, and treeness/RCV ratio). Then it will subset the genes based on the specified metric and fraction (e.g., top 25% of genes based on alignment length), infer new trees using the subseted genes, and compare the resulting trees to the reference tree (in this case, the supermatrix tree) using the Robinson-Foulds distance metric. The results will be saved in the specified output directory for further analysis.
+The script will first compute several metrics for each gene tree (alignment length, average bipartition support, relative composition variability, median long branch score, treeness, saturation, and treeness/RCV ratio). Then it will subset the genes based on the specified metric and fraction (e.g., top 75% of genes based on alignment length), infer new trees using the subseted genes, and compare the resulting trees to the reference tree (in this case, the supermatrix tree) using the Robinson-Foulds distance metric. The results will be saved in the specified output directory for further analysis.
 
 ### First, compute gene metrics
 
@@ -207,11 +207,11 @@ The results are saved in a TSV file for further analysis (`${OUTPUT_DIR}/gene-me
 
 This file contains three columns: `gene`, `metric`, and `value`. The `gene` column contains the name of the gene, the `metric` column contains the name of the metric (e.g., `aln_len`, `abs`, etc.), and the `value` column contains the corresponding value for that metric.
 
-The file is used to plot the distribution of each metric across all genes (script `plot-gene-metrics.py`), and to perform gene sensitivity analysis by subsetting genes based on their metric values (e.g., top 25% of genes based on alignment length, etc.).
+The file is used to plot the distribution of each metric across all genes (script `plot-gene-metrics.py`), and to perform gene sensitivity analysis by subsetting genes based on their metric values.
 
 ### Second, perform gene sensitivity analysis
 
-Second, the script performs a gene sensitivity analysis by inferring species trees using subsets of genes. This allows to evaluate how the number of genes included in the analysis impacts the resulting species tree topology. For each metric, the genes are subseted based on the `--top-fraction` parameter (e.g., top 0.25, top 0.5, etc.). The script will read the trimmed alignments for the subseted genes, and infer new trees. The resulting trees are then compared to the reference tree (in this case, the supermatrix tree, `--ref-tree`) using the Robinson-Foulds distance metric. This allows to evaluate how the number of genes included in the analysis impacts the resulting species tree topology.
+Second, the script performs a gene sensitivity analysis by inferring species trees using subsets of genes. This allows to evaluate how the number of genes included in the analysis impacts the resulting species tree topology. For each metric, the genes are subseted based on the `--top-fraction` parameter (e.g., top 0.75, to keep the top 75% best-scoring genes). The script will read the trimmed alignments for the subseted genes, and infer new trees. The resulting trees are then compared to the reference tree (in this case, the supermatrix tree, `--ref-tree`) using the Robinson-Foulds distance metric. This allows to evaluate how the number of genes included in the analysis impacts the resulting species tree topology.
 
 ```shell
 python3 gene-sensitivity-analysis.py \
