@@ -72,7 +72,7 @@ def main():
 
     input_file = os.path.abspath(args.input)
     aln_dir = os.path.abspath(args.trimmed_alignments)
-    output_dir = os.path.abspath(args.output)
+    output_dir = os.path.abspath(args.output_dir)
     top_fraction = args.top_fraction
     model = args.model
     threads = args.threads
@@ -138,16 +138,17 @@ def main():
     pool_size = min(threads, n_metrics)
 
     jobs = []
+    n_top = 1
     for metric in metrics_found:
         gene_values = genes_by_metric[metric]
         n_top = max(1, int(len(gene_values) * top_fraction))
         jobs.append((metric, gene_values, aln_dir, output_dir, n_top, model, ref_tree, iqtree_threads))
 
-    pct_label = str(int(top_fraction * 100)) + "%"
+    pct_label = str(top_fraction * 100) + "%"
     print_message(
-        "Running sensitivity analysis for " + str(n_metrics) + " metrics "
-        "(top " + pct_label + " genes per metric) using " + str(pool_size) + " parallel workers, "
-        + str(iqtree_threads) + " IQ-TREE thread(s) each"
+        "Running sensitivity analysis for " + str(n_metrics) + " metrics using top "
+        + pct_label + " genes per metric (" + str(n_top) + " genes). Running " + str(pool_size) + " parallel workers, "
+        + str(iqtree_threads) + " IQ-TREE thread(s) each."
     )
 
     pool = mp.Pool(processes=pool_size)
@@ -178,8 +179,8 @@ def run_metric(args):
     result = {"metric": metric, "n_genes": n_top, "rf": "NA"}
 
     # Sort: ascending for metrics where lower = better, descending otherwise
-    ascending = metric in LOWER_IS_BETTER
-    sorted_genes = sorted(gene_values, key=lambda x: x[1], reverse=not ascending)
+    descending = metric in LOWER_IS_BETTER
+    sorted_genes = sorted(gene_values, key=lambda x: x[1], reverse=not descending)
     top_genes = [gene for gene, _ in sorted_genes[:n_top]]
 
     logs.append(print_message_str(

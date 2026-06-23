@@ -271,11 +271,8 @@ def main():
         print_message("Calculating gene and site concordance factors (gCF and sCF) for SUPERMATRIX tree...")
         os.chdir(working_directory)
         
-        print_message("Calculating gCF...")
-        os.system("iqtree3 --quiet -t  SUPERMATRIX.aln.fasta.treefile --gcf ALL.trees --prefix gcf -T 1 >/dev/null 2>&1")
-        
-        print_message("Calculating sCF...")
-        os.system(f"iqtree3 --quiet -te SUPERMATRIX.aln.fasta.treefile -s SUPERMATRIX.aln.fasta -m {model} --scfl 1000 --prefix scf -T {threads} >/dev/null 2>&1")
+        # Calculate gCF and sCF using IQ-TREE
+        os.system(f"iqtree3 --quiet -te  SUPERMATRIX.aln.fasta.treefile -s SUPERMATRIX.aln.fasta --gcf ALL.trees -m {model} --scf 1000 --prefix concordance-factors >/dev/null 2>&1")
 
         print_message("gCF and sCF calculation complete! See gcf.*/scf.* for annotated treefile.")
 

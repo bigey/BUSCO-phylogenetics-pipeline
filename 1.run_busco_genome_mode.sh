@@ -9,7 +9,7 @@ set -euo pipefail
 # Directory containing genome assemblies in FASTA format (e.g.,SPECIES.fasta)
 GENOME_DIR=Genomes
 
-# Directory to store BUSCO results. 
+# Directory to store BUSCO results.
 # Will contain one subdirectory per genome
 BUSCO_RESULTS="BUSCO-results"
 
@@ -18,25 +18,25 @@ BUSCO_RESULTS="BUSCO-results"
 #   or using the command line: busco --list-datasets
 LINEAGE="saccharomycetes"
 
-# Choose a gene predictor. 
-# Options are: miniprot (default), metaeuk, augustus. 
-#   miniprot is the fastest but may be less accurate, 
+# Choose a gene predictor.
+# Options are: miniprot (default), metaeuk, augustus.
+#   miniprot is the fastest but may be less accurate,
 #   metaeuk is a good compromise between speed and accuracy,
 #   augustus is the slowest but most accurate
 # PREDICTOR="miniprot"
 PREDICTOR="metaeuk"
 # PREDICTOR="augustus"
 
-# Number of threads to use for BUSCO. 
+# Number of threads to use for BUSCO.
 # Adjust based on your system's resources.
 THREADS=16
 
 #==============================================================================
-# You don't need to modify anything below this line unless you want to change 
+# You don't need to modify anything below this line unless you want to change
 #   the BUSCO command or the way results are organized.
-# 
-# The script will run BUSCO for each genome sequences in `GENOME_DIR` 
-#   and create links in the BUSCO result directories: `BUSCO_RESULTS`. 
+#
+# The script will run BUSCO for each genome sequences in `GENOME_DIR`
+#   and create links in the BUSCO result directories: `BUSCO_RESULTS`.
 #==============================================================================
 
 mkdir -p ${BUSCO_RESULTS}
@@ -47,6 +47,11 @@ conda activate busco-phylo
 for genome in $GENOME_DIR/*.fasta; do
     PREFIX=$(basename ${genome} .fasta)
     OUT_DIR=busco_${PREFIX}
+
+    if [ -e ${BUSCO_RESULTS}/run_${PREFIX} ]; then
+        echo "BUSCO results for genome ${PREFIX} already exist. Skipping."
+        continue
+    fi
 
     echo "Processing genome ${genome}..."
     busco \
@@ -61,7 +66,7 @@ for genome in $GENOME_DIR/*.fasta; do
 
     # Clean up unnecessary directories and files
     find ${OUT_DIR} -name "logs" -o -name "tmp" -o -name "blast_db" | xargs rm -rf
-    
+
     # Create a corresponding link to the BUSCO results directory
     cd ${BUSCO_RESULTS}
     ln -s ../${OUT_DIR}/run_${LINEAGE}_odb* run_${PREFIX}
@@ -70,4 +75,3 @@ done
 
 conda deactivate
 echo "done"
-
