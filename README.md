@@ -2,18 +2,19 @@
 
 ## Presentation
 
-The following scripts are used to construct species phylogenies using BUSCO single copy proteins. It works directly from BUSCO outputs and can be used for supermatrix or supertree/coalescent methods. The program will automatically identify single-copy BUSCO proteins, generate alignments using `MAFFT` and `ClipKIT`. Then it either concatenates them into a supermatrix fasta fileto infer the species-tree phylogeny using `IQ-TREE` or generate individual trees for a supertree approach. The program can also perform gene and sequence concordance factors (gCF and sCF) analysis if both supermatrix and supertree methods are selected (`--concordance`). The resulting supermatrix species tree (in newick format) is labeled with gene and sequence concordance factors (`gCF` and `sCF`). This can provide insights into the level of gene tree discordance and the robustness of the inferred species tree. 
+The following scripts are used to construct species phylogenies using BUSCO single copy proteins. It works directly from BUSCO outputs and can be used for supermatrix or supertree/coalescent methods. The program will automatically identify single-copy BUSCO proteins, generate alignments using `MAFFT` and `ClipKIT`. Then it either concatenates them into a supermatrix fasta fileto infer the species-tree phylogeny using `IQ-TREE` or generate individual trees for a supertree approach. The program can also perform gene and sequence concordance factors (gCF and sCF) analysis if both supermatrix and supertree methods are selected (`--concordance`). The resulting supermatrix species tree (in newick format) is labeled with gene and sequence concordance factors (`gCF` and `sCF`). This can provide insights into the level of gene tree discordance and the robustness of the inferred species tree.
 
 The pipeline is designed to perform sensitivity analysis by evaluating the impact of the number of genes included in the analysis on the resulting species tree topology. It computes several metrics for each gene tree (alignment length, average bipartition support, relative composition variability, median long branch score, treeness, saturation, and treeness/RCV ratio) and subsets the genes based on the specified metric and fraction (e.g., top 75% of genes based on alignment length). Then it infers new trees using the subseted genes and compares the resulting trees to a reference tree (in this case, the supermatrix tree) using the Robinson-Foulds distance metric. This allows to evaluate how the number of genes included in the analysis impacts the resulting species tree topology.
 
 ## Version
 
++ v2.1 (2026-10-08): The Python scripts were refactored to increase modularity, with the aim of making them more organised and easier to work with.
 + v2.0 (2026-04-28): Added gene sensitivity analysis, including gene metrics computation and tree comparison using Robinson-Foulds distance.
 + v1.0 (2026-03-08): Initial release, including supermatrix and supertree methods, concordance factor computation.
 
 ## History
 
-Script `busco-phylo.py` is derived from the original pipeline available at [GitHub](https://github.com/jamiemcg/BUSCO_phylogenomics.git), which was developed by [Jamie McGowan](https://jamiemcgowan.ie/) and is licensed under the MIT License. It has been modified to include additional features and improvements like concordance factor analysis. 
+Script `busco-phylo.py` is derived from the original pipeline available at [GitHub](https://github.com/jamiemcg/BUSCO_phylogenomics.git), which was developed by [Jamie McGowan](https://jamiemcgowan.ie/) and is licensed under the MIT License. It has been modified to include additional features and improvements like concordance factor analysis.
 
 The sensitivity analysis part of the pipeline (`compute-gene-metrics.py` and `gene-sensitivity-analysis.py`) is inspired by the sensitivity analysis tutorial of [Jacob L. Steenwyk](https://jlsteenwyk.com). Specifically, the gene sensitivity analysis is based on the tutorial available at [Sensitivity analysis: detecting incongruence at different scales](https://jlsteenwyk.com/tutorials/ub_sensitivity_analysis.html).
 
@@ -21,14 +22,15 @@ The sensitivity analysis part of the pipeline (`compute-gene-metrics.py` and `ge
 
 The following softwares and packages should be installed to run the pipeline:
 
-* [Python3](https://www.python.org/)
-* [BioPython](https://biopython.org/)
-* [pandas](https://pandas.pydata.org/)
-* [matplotlib](https://matplotlib.org/)
-* [MAFFT](https://mafft.cbrc.jp/alignment/software/)
-* [ClipKIT](https://jlsteenwyk.com/ClipKIT/)
-* [PhyKIT](https://jlsteenwyk.com/PhyKIT/)
-* [IQ-TREE](https://iqtree.github.io/)
++ [Python3](https://www.python.org/)
++ [pandas](https://pandas.pydata.org/)
++ [matplotlib](https://matplotlib.org/)
++ [BioPython](https://biopython.org/)
++ [BUSCO](https://busco.ezlab.org/)
++ [MAFFT](https://mafft.cbrc.jp/alignment/software/)
++ [ClipKIT](https://jlsteenwyk.com/ClipKIT/)
++ [PhyKIT](https://jlsteenwyk.com/PhyKIT/)
++ [IQ-TREE](https://iqtree.github.io/)
 
 The simple way is to create a conda environment where all the dependencies are installed. A `environment.yml` file is provided for this purpose. You can create a dedicated conda environment with the following command:
 
@@ -93,11 +95,11 @@ The resulting supermatrix species tree (in newick format) is labeled with gene a
 
 At the end of the run, you will find the resulting alignments and trees in the `OUTPUT_DIRECTORY` directory:
 
-* `SUPERMATRIX.aln.fasta`: the concatenated supermatrix alignment,
-* `ALL.trees`: the concatenated family protein trees,
-* `SUPERMATRIX.treefile`: the supermatrix tree with bootstrap support values (in newick format),
-* `gcf.cf.tree`: the supermatrix tree labeled with gene concordance factor (gCF),
-* `sCF.cf.tree`: the supermatrix tree labeled with sequence concordance factor (sCF).
++ `SUPERMATRIX.aln.fasta`: the concatenated supermatrix alignment,
++ `ALL.trees`: the concatenated family protein trees,
++ `SUPERMATRIX.treefile`: the supermatrix tree with bootstrap support values (in newick format),
++ `gcf.cf.tree`: the supermatrix tree labeled with gene concordance factor (gCF),
++ `sCF.cf.tree`: the supermatrix tree labeled with sequence concordance factor (sCF).
 
 Branch labels in the `SUPERMATRIX.treefile.cf.tree` file are formatted as follows:
 
@@ -107,18 +109,18 @@ Where `bootstrap` is the bootstrap support value for the branch, `gCF` is the ge
 
 ### `busco-phylo.py` required parameters
 
-* `--directory`: input directory containing BUSCO results (each link should be named `run_[species]` and point to the corresponding BUSCO `run_[lineage]_odb[XX]` sub-directory)
-* `--output`: phylogenetic output directory
-* `--supermatrix`: choose to run supermatrix method
-* `--supertree`: choose to run supertree method
++ `--directory`: input directory containing BUSCO results (each link should be named `run_[species]` and point to the corresponding BUSCO `run_[lineage]_odb[XX]` sub-directory)
++ `--output`: phylogenetic output directory
++ `--supermatrix`: choose to run supermatrix method
++ `--supertree`: choose to run supertree method
 
 ### `busco-phylo.py` optional parameters
 
-* `--percent-single-copy`: fraction of the BUSCO single-copy genes species will be included in the analysis (default = 1.0).
-* `--model`: protein evolution model to use for IQ-TREE phylogeny inference (see documentation, default to LG+R4+F)".
-* `--concordance`: run gene concordance factor analysis (automatic turns on `--supermatrix` and `--supertree` methods).
-* `--stop-early`: stop pipeline after generating concatenated alignment, only relevant with `--supermatrix` method, incompatible with `--supertree` and `--concordance`.
-* `--threads`: number of threads to use (default = 8)
++ `--percent-single-copy`: fraction of the BUSCO single-copy genes species will be included in the analysis (default = 1.0).
++ `--model`: protein evolution model to use for IQ-TREE phylogeny inference (see documentation, default to LG+R4+F)".
++ `--concordance`: run gene concordance factor analysis (automatic turns on `--supermatrix` and `--supertree` methods).
++ `--stop-early`: stop pipeline after generating concatenated alignment, only relevant with `--supermatrix` method, incompatible with `--supertree` and `--concordance`.
++ `--threads`: number of threads to use (default = 8)
 
 ## Running BUSCO for multiple species (step 1)
 
@@ -181,6 +183,7 @@ Then run the script:
 ```shell
 bash -i 3.run_gene_sensitivity_analysis.sh
 ```
+
 The script will first compute several metrics for each gene tree (alignment length, average bipartition support, relative composition variability, median long branch score, treeness, saturation, and treeness/RCV ratio). Then it will subset the genes based on the specified metric and fraction (e.g., top 75% of genes based on alignment length), infer new trees using the subseted genes, and compare the resulting trees to the reference tree (in this case, the supermatrix tree) using the Robinson-Foulds distance metric. The results will be saved in the specified output directory for further analysis.
 
 ### First, compute gene metrics

@@ -13,35 +13,27 @@
 
 import os
 import sys
+import time
+import shutil
+import logging
+import colorlog
 import argparse
 import subprocess
 import multiprocessing as mp
 
-from time import gmtime, strftime
+
+# External dependencies
+external_dependencies = ["phykit"]
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Compute PhyKIT information-content metrics for each single-copy BUSCO gene"
-    )
-    parser.add_argument(
-        "--trimmed-alignments", type=str, required=True,
-        help="Directory containing trimmed alignment files (*.trimmed.aln.fasta)"
-    )
-    parser.add_argument(
-        "--trees", type=str, required=True,
-        help="Directory containing individual gene trees (*.trimmed.aln.fasta.treefile)"
-    )
-    parser.add_argument(
-        "--output", type=str, default="info_content_genes.txt",
-        help="Output tab-delimited file (default: info_content_genes.txt)"
-    )
-    parser.add_argument(
-        "--threads", type=int, default=8,
-        help="Number of parallel threads (default: 8)"
-    )
-    args = parser.parse_args()
+def check_dependency(name):
+    if shutil.which(name) is None:
+        logger.critical(f"Program {name} is required but not in the PATH!")
+        logger.critical(f"Please install {name}.")
+        sys.exit(1)
 
+
+def main(args):
     aln_dir = os.path.abspath(args.trimmed_alignments)
     tree_dir = os.path.abspath(args.trees)
     output_file = os.path.abspath(args.output)
@@ -49,20 +41,14 @@ def main():
 
     # Validate input directories
     if not os.path.isdir(aln_dir):
-        print("Error! " + aln_dir + " is not a directory!")
+        logger.critical(f"{aln_dir} is not a directory!")
         sys.exit(1)
     if not os.path.isdir(tree_dir):
-        print("Error! " + tree_dir + " is not a directory!")
-        sys.exit(1)
-
-    # Check PhyKIT is available
-    result = subprocess.run(["phykit", "aln_len", "--help"], capture_output=True, text=True)
-    if result.returncode != 0:
-        print("Error! PhyKIT is not available. Please install PhyKIT and ensure it is in your PATH.")
+        logger.critical(f"{tree_dir} is not a directory!")
         sys.exit(1)
 
     # Discover genes: pair each trimmed alignment with its gene tree
-    print_message("Scanning " + aln_dir + " for trimmed alignments...")
+    logger.info(f"Scanning {aln_dir} for trimmed alignments...")
     jobs = []
     missing_trees = []
 
@@ -80,23 +66,23 @@ def main():
         jobs.append((busco_id, aln_path, tree_path))
 
     if missing_trees:
-        print_message("Warning: " + str(len(missing_trees)) + " genes have no treefile and will be skipped")
+        logger.warning(f"{len(missing_trees)} genes have no treefile and will be skipped")
 
     if not jobs:
-        print_message("Error! No gene/tree pairs found. Exiting.")
+        logger.critical("No gene/tree pairs found. Exiting.")
         sys.exit(1)
 
-    print_message(str(len(jobs)) + " genes found with paired trimmed alignment and gene tree")
+    logger.info(f"{len(jobs)} genes found with paired trimmed alignment and gene tree")
 
     # Compute metrics in parallel
-    print_message("Computing 7 PhyKIT metrics per gene using " + str(threads) + " threads...")
+    logger.info(f"Computing 7 PhyKIT metrics per gene using {threads} threads...")
     pool = mp.Pool(processes=threads)
     results = pool.map(compute_metrics, jobs)
     pool.close()
     pool.join()
 
     # Write results
-    print_message("Writing results to " + output_file)
+    logger.info(f"Writing results to {output_file}")
     n_ok = 0
     with open(output_file, "w") as fout:
         for entry in results:
@@ -107,8 +93,8 @@ def main():
                 fout.write(busco_id + "\t" + metric + "\t" + value + "\n")
             n_ok += 1
 
-    print_message(str(n_ok) + " genes written to " + output_file)
-    print_message("Step 1 complete!")
+    logger.info(f"{n_ok} genes written to {output_file}")
+    logger.info("Step 1 complete!")
 
 
 def compute_metrics(args):
@@ -174,9 +160,71 @@ def run_command(cmd):
         return None
 
 
-def print_message(*message):
-    print(strftime("%d-%m-%Y %H:%M:%S", gmtime()) + "\t" + " ".join(map(str, message)))
-
-
 if __name__ == "__main__":
-    main()
+
+    parser = argparse.ArgumentParser(
+        description="Compute PhyKIT information-content metrics for each single-copy BUSCO gene"
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        default=False,
+        help="Turn on verbose mode."
+    )
+    parser.add_argument(
+        "--trimmed-alignments", type=str, required=True,
+        help="Directory containing trimmed alignment files (*.trimmed.aln.fasta)"
+    )
+    parser.add_argument(
+        "--trees", type=str, required=True,
+        help="Directory containing individual gene trees (*.trimmed.aln.fasta.treefile)"
+    )
+    parser.add_argument(
+        "--output", type=str, default="info_content_genes.txt",
+        help="Output tab-delimited file (default: info_content_genes.txt)"
+    )
+    parser.add_argument(
+        "--threads", type=int, default=8,
+        help="Number of parallel threads (default: 8)"
+    )
+    args = parser.parse_args()
+
+    if args.verbose:
+        log_level = logging.DEBUG
+    else:
+        log_level = logging.INFO
+
+    # handler configuration
+    log_colors = {
+        "DEBUG": "cyan",
+        "INFO": "green",
+        "WARNING": "yellow",
+        "ERROR": "white,bg_red",
+        "CRITICAL": "red",
+    }
+
+    formatter = colorlog.ColoredFormatter(
+        fmt="%(asctime)s:%(log_color)s%(levelname)s%(reset)s:%(message)s",
+        log_colors=log_colors,
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+
+    handler = colorlog.StreamHandler()
+    handler.setFormatter(fmt=formatter)
+
+    # logger configuration
+    logger = logging.getLogger()
+    logger.addHandler(handler)
+    logger.setLevel(log_level)
+
+    start_time = time.time()
+
+    # Check dependencies
+    list(map(check_dependency, external_dependencies))
+
+    main(args)
+
+    end_time = time.time()
+    execution_time = time.strftime("%Hh:%Mm:%Ss", time.gmtime(end_time - start_time))
+    logger.info(f"Execution time: {execution_time}")
+    logger.info("Done")

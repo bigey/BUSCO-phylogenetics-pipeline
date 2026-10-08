@@ -1,13 +1,14 @@
 name: busco-phylo
 channels:
-  - bioconda
   - conda-forge
+  - bioconda
 dependencies:
+  - python>=3.0
+  - pandas
+  - matplotlib
   - biopython
   - busco>=6.0.0
   - mafft
   - clipkit
-  - phykit>=2.0
   - iqtree>=3.0
-  - pandas
-  - matplotlib
+  - phykit>=2.0
