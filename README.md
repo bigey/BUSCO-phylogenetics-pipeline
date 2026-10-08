@@ -1,5 +1,7 @@
 # BUSCO Phylogenomics pipeline
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/) [![Claude](https://img.shields.io/badge/AI%20assisted-Claude-orange?logo=anthropic)](https://claude.ai)
+
 ## Presentation
 
 The following scripts are used to construct species phylogenies using BUSCO single copy proteins. It works directly from BUSCO outputs and can be used for supermatrix or supertree/coalescent methods. The program will automatically identify single-copy BUSCO proteins, generate alignments using `MAFFT` and `ClipKIT`. Then it either concatenates them into a supermatrix fasta fileto infer the species-tree phylogeny using `IQ-TREE` or generate individual trees for a supertree approach. The program can also perform gene and sequence concordance factors (gCF and sCF) analysis if both supermatrix and supertree methods are selected (`--concordance`). The resulting supermatrix species tree (in newick format) is labeled with gene and sequence concordance factors (`gCF` and `sCF`). This can provide insights into the level of gene tree discordance and the robustness of the inferred species tree.
