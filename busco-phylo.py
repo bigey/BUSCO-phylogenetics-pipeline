@@ -359,7 +359,7 @@ def main(args):
         if not os.path.isfile(os.path.join(working_directory, "ALL.trees")):
 
             logger.info("Starting supertree analysis...")
-            logger.info("Generating a phylogenetic tree for each BUSCO gene/protein, {threads} threads used...")
+            logger.info(f"Generating a phylogenetic tree for each BUSCO gene/protein, {threads} threads used...")
             iqtree_commands = []
 
             for busco in single_copy_buscos:

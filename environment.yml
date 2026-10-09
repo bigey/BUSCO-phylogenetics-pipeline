@@ -1,9 +1,10 @@
-name: busco-phylo
+name: env-busco-phylo
 channels:
   - conda-forge
   - bioconda
 dependencies:
   - python>=3.0
+  - colorlog
   - pandas
   - matplotlib
   - biopython

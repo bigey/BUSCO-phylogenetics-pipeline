@@ -6,15 +6,16 @@ TRIMMED_ALIGNMENTS="Phylogenomics/trimmed_alignments"
 TREES_DIR="Phylogenomics/trees"
 OUTPUT_DIR="Phylogenomics"
 MODEL="LG+R4+F"
-TOP_FRACTION="0.10"
+TOP_FRACTION="0.50"
 THREADS=64
 
-conda activate busco-phylo
+conda activate env-busco-phylo
 
 # This script will read the trimmed alignments and their corresponding gene trees, 
 #   then compute several metrics related to the information content of each tree, 
 #   such as the number of informative sites, tree length, and other relevant statistics. 
 # The results will be saved in a TSV file for further analysis.
+echo "# Compute phylogenetic alignment and tree metrics..."
 python3 compute-gene-metrics.py \
     --trimmed-alignments ${TRIMMED_ALIGNMENTS} \
     --trees ${TREES_DIR} \
@@ -22,6 +23,7 @@ python3 compute-gene-metrics.py \
     --threads ${THREADS}
 
 # We generate a PDF file with metric distributions.
+echo "# Plot metric distributions..."
 python3 plot-gene-metrics.py --input ${OUTPUT_DIR}/gene-metrics.tsv --output ${OUTPUT_DIR}/gene-metrics.pdf
 
 # This script will perform a sensitivity analysis to assess how the choice of genes 
@@ -31,6 +33,7 @@ python3 plot-gene-metrics.py --input ${OUTPUT_DIR}/gene-metrics.tsv --output ${O
 # This tree is comparared to the reference tree by using the Robinson-Foulds metric, 
 #    which quantifies the distance between two trees.
 #    Robinson & Foulds, Mathematical Biosciences (1981), doi: 10.1016/0025-5564(81)90043-2.
+echo "# Perform sensitivity analysis using top scoring genes..."
 python3 gene-sensitivity-analysis.py \
     --ref-tree ${REFERENCE_TREE} \
     --input ${OUTPUT_DIR}/gene-metrics.tsv \
@@ -40,4 +43,6 @@ python3 gene-sensitivity-analysis.py \
     --model ${MODEL} \
     --threads ${THREADS}
 
+# End
 conda deactivate
+echo "# All done!"

@@ -39,6 +39,9 @@ def main(args):
     output_file = os.path.abspath(args.output)
     threads = args.threads
 
+    # Limit internal threading in phykit (OpenMP) to 1 per process
+    os.environ['OMP_NUM_THREADS'] = '1'
+
     # Validate input directories
     if not os.path.isdir(aln_dir):
         logger.critical(f"{aln_dir} is not a directory!")
@@ -48,7 +51,7 @@ def main(args):
         sys.exit(1)
 
     # Discover genes: pair each trimmed alignment with its gene tree
-    logger.info(f"Scanning {aln_dir} for trimmed alignments...")
+    logger.info(f"Scanning for trimmed alignments...")
     jobs = []
     missing_trees = []
 
@@ -75,14 +78,16 @@ def main(args):
     logger.info(f"{len(jobs)} genes found with paired trimmed alignment and gene tree")
 
     # Compute metrics in parallel
-    logger.info(f"Computing 7 PhyKIT metrics per gene using {threads} threads...")
+    logger.info(f"Computing per gene alignment/phylogenetic metrics using {threads} threads...")
     pool = mp.Pool(processes=threads)
+    # pool = mp.Pool(processes=1)
     results = pool.map(compute_metrics, jobs)
     pool.close()
     pool.join()
+    logger.info(f"Done")
 
     # Write results
-    logger.info(f"Writing results to {output_file}")
+    logger.info(f"Writing results to {output_file}...")
     n_ok = 0
     with open(output_file, "w") as fout:
         for entry in results:
@@ -93,20 +98,22 @@ def main(args):
                 fout.write(busco_id + "\t" + metric + "\t" + value + "\n")
             n_ok += 1
 
-    logger.info(f"{n_ok} genes written to {output_file}")
-    logger.info("Step 1 complete!")
+    logger.info(f"Done")
 
 
 def compute_metrics(args):
     busco_id, aln_path, tree_path = args
     metrics = {}
 
-    # 1. Alignment length
-    out = run_command(["phykit", "aln_len", aln_path])
+    # Alignment length
+    # Longer alignments are associated with strong phylogenetic signal
+    out = run_command(["phykit", "alignment_length", aln_path])
     metrics["aln_len"] = out.strip().split()[0] if out else "NA"
 
-    # 2. Average bipartition support (mean from multi-line output)
-    out = run_command(["phykit", "bss", tree_path])
+    # Bipartition support (mean from multi-line output)
+    # High bipartition support values are thought to be desirable because                                                                                                           
+    #   they are indicative of greater certainty in tree topology
+    out = run_command(["phykit", "bipartition_support_stats", tree_path])
     metrics["abs"] = "NA"
     if out:
         for line in out.splitlines():
@@ -114,12 +121,18 @@ def compute_metrics(args):
                 metrics["abs"] = line.split()[-1]
                 break
 
-    # 3. Relative composition variability
-    out = run_command(["phykit", "rcv", aln_path])
+    # Relative composition variability
+    # Lower RCV values are thought to be desirable because they represent
+    #   a lower composition bias in an alignment
+    out = run_command(["phykit", "relative_composition_variability", aln_path])
     metrics["rcv"] = out.strip().split()[0] if out else "NA"
 
-    # 4. Median long-branch score (median from multi-line output)
-    out = run_command(["phykit", "lbs", tree_path])
+    # Long-branch scores (median from multi-line output)
+    # Lower LB scores are thought to be desirable because    
+    #   they are indicative of taxa or trees that likely do
+    #   not have issues with long branch attraction
+
+    out = run_command(["phykit", "long_branch_score", tree_path])
     metrics["lbs"] = "NA"
     if out:
         for line in out.splitlines():
@@ -127,25 +140,36 @@ def compute_metrics(args):
                 metrics["lbs"] = line.split()[-1]
                 break
 
-    # 5. Treeness
-    out = run_command(["phykit", "tness", tree_path])
-    metrics["treeness"] = out.strip().split()[0] if out else "NA"
+    # Treeness statistic
+    # Higher treeness values are thought to be desirable because they
+    #   represent a higher signal-to-noise ratio
+    # out = run_command(["phykit", "treeness", tree_path])
+    # metrics["treeness"] = out.strip().split()[0] if out else "NA"
 
-    # 6. Saturation (second field: absolute value of saturation minus 1)
-    out = run_command(["phykit", "sat", "-a", aln_path, "-t", tree_path])
+    # Saturation (second field: absolute value of saturation minus 1)
+    # Lower values in the second column are indicative of values closer to one and, 
+    #   thus, less saturation
+    out = run_command(["phykit", "saturation", "-a", aln_path, "-t", tree_path])
     metrics["saturation"] = "NA"
     if out:
         parts = out.strip().split()
         if len(parts) >= 2:
             metrics["saturation"] = parts[1]
 
-    # 7. Treeness/RCV ratio (first field)
-    out = run_command(["phykit", "tor", "-a", aln_path, "-t", tree_path])
+    # Treeness/RCV ratio (first field) and treeness (second field)
+    # Higher treeness/RCV values are thought to be desirable because
+    #   they harbor a high signal-to-noise ratio are least susceptible
+    #   to composition bias
+    # Higher treeness values are thought to be desirable because they
+    #   represent a higher signal-to-noise ratio
+    out = run_command(["phykit", "treeness_over_rcv", "-a", aln_path, "-t", tree_path])
     metrics["treeness_over_rcv"] = "NA"
+    metrics["treeness"] = "NA"
     if out:
         parts = out.strip().split()
         if parts:
             metrics["treeness_over_rcv"] = parts[0]
+            metrics["treeness"] = parts[1]
 
     return busco_id, metrics
 
@@ -227,4 +251,4 @@ if __name__ == "__main__":
     end_time = time.time()
     execution_time = time.strftime("%Hh:%Mm:%Ss", time.gmtime(end_time - start_time))
     logger.info(f"Execution time: {execution_time}")
-    logger.info("Done")
+    logger.info("All done. Exit")

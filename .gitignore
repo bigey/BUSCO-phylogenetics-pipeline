@@ -3,3 +3,7 @@ BUSCO-results/
 Genomes/
 Phylogenomics/
 *.log
+*.tsv
+
+# Python cache files
+__pycache__/

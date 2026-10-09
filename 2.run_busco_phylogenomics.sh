@@ -4,10 +4,10 @@ set -euo pipefail
 BUSCO_RESULTS="BUSCO-results"
 OUT_PHYLO_DIR="Phylogenomics"
 MODEL="LG+R4+F"
-OUTGROUP="NAGL"
+OUTGROUP="DebSin_CBS10405"
 THREADS=64
 
-conda activate busco-phylo
+conda activate env-busco-phylo
 
 # It is sometimes required to unset the MAFFT_BINARIES environment variable to allow BUSCOphylo.py to find the correct MAFFT executable
 unset MAFFT_BINARIES

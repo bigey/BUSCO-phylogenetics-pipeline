@@ -13,14 +13,12 @@
 import os
 import sys
 import argparse
-
-from time import gmtime, strftime
-
+import logging
+import colorlog
 import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-
 
 METRIC_ORDER = [
     "aln_len",
@@ -46,34 +44,27 @@ METRIC_LABELS = {
 LOWER_IS_BETTER = {"rcv", "lbs", "saturation"}
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Plot PhyKIT information-content metrics from compute_info_content.py output"
-    )
-    parser.add_argument(
-        "--input", type=str, required=True,
-        help="Tab-delimited input file produced by compute_info_content.py (gene, metric, value)"
-    )
-    parser.add_argument(
-        "--output", type=str, default="info_content_genes.pdf",
-        help="Output figure file (default: info_content_genes.pdf). Format inferred from extension (pdf, png, svg)."
-    )
-    parser.add_argument(
-        "--dpi", type=int, default=150,
-        help="Resolution in DPI for raster formats (default: 150)"
-    )
-    args = parser.parse_args()
+def check_dependency(module_name, package_name=None):
+    if package_name is None:
+        package_name = module_name
+    try:
+        __import__(module_name)
+    except ImportError:
+        logger.critical(f"Package {package_name} is required but not installed!")
+        logger.critical(f"Please install {package_name}.")
+        sys.exit(1)
 
+
+def main(args):
     input_file = os.path.abspath(args.input)
     output_file = os.path.abspath(args.output)
     dpi = args.dpi
 
     if not os.path.isfile(input_file):
-        print("Error! " + input_file + " does not exist!")
+        logger.critical(f"{input_file} does not exist!")
         sys.exit(1)
 
-    # Load data
-    print_message("Reading " + input_file)
+    logger.info(f"Reading {input_file}")
     df = pd.read_csv(input_file, sep="\t", header=None, names=["gene", "metric", "value"])
     df["value"] = pd.to_numeric(df["value"], errors="coerce")
     df = df.dropna(subset=["value"])
@@ -83,13 +74,13 @@ def main():
     missing = [m for m in METRIC_ORDER if m not in metrics_found]
 
     if missing:
-        print_message("Warning: metrics not found in input and will be skipped: " + ", ".join(missing))
+        logger.warning(f"Metrics not found in input and will be skipped: {', '.join(missing)}")
     if not metrics_to_plot:
-        print_message("Error! No known metrics found in input file. Exiting.")
+        logger.critical("No known metrics found in input file. Exiting.")
         sys.exit(1)
 
     n_genes = df["gene"].nunique()
-    print_message(str(n_genes) + " genes and " + str(len(metrics_to_plot)) + " metrics loaded")
+    logger.info(f"{n_genes} genes and {len(metrics_to_plot)} metrics loaded")
 
     # Layout: up to 4 columns
     n_cols = 4
@@ -165,16 +156,66 @@ def main():
     )
     fig.tight_layout()
 
-    print_message("Saving figure to " + output_file)
+    logger.info(f"Saving figure to {output_file}")
     fig.savefig(output_file, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
 
-    print_message("Done!")
+    logger.info("All done. Exit")
 
 
-def print_message(*message):
-    print(strftime("%d-%m-%Y %H:%M:%S", gmtime()) + "\t" + " ".join(map(str, message)))
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description="Plot PhyKIT information-content metrics from compute_info_content.py output"
+    )
+    parser.add_argument(
+        "--input", type=str, required=True,
+        help="Tab-delimited input file produced by compute_info_content.py (gene, metric, value)"
+    )
+    parser.add_argument(
+        "--output", type=str, default="info_content_genes.pdf",
+        help="Output figure file (default: info_content_genes.pdf). Format inferred from extension (pdf, png, svg)."
+    )
+    parser.add_argument(
+        "--dpi", type=int, default=150,
+        help="Resolution in DPI for raster formats (default: 150)"
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        default=False,
+        help="Turn on verbose mode."
+    )
+    args = parser.parse_args()
+
+    if args.verbose:
+        log_level = logging.DEBUG
+    else:
+        log_level = logging.INFO
+
+    log_colors = {
+        "DEBUG": "cyan",
+        "INFO": "green",
+        "WARNING": "yellow",
+        "ERROR": "white,bg_red",
+        "CRITICAL": "red",
+    }
+
+    formatter = colorlog.ColoredFormatter(
+        fmt="%(asctime)s:%(log_color)s%(levelname)s%(reset)s:%(message)s",
+        log_colors=log_colors,
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+
+    handler = colorlog.StreamHandler()
+    handler.setFormatter(fmt=formatter)
+
+    logger = logging.getLogger()
+    logger.addHandler(handler)
+    logger.setLevel(log_level)
+
+    check_dependency("pandas")
+    check_dependency("matplotlib")
+
+    main(args)

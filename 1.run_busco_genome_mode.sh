@@ -7,7 +7,7 @@ set -euo pipefail
 #==============================================================================
 
 # Directory containing genome assemblies in FASTA format (e.g.,SPECIES.fasta)
-GENOME_DIR=Genomes
+GENOME_DIR="Genomes"
 
 # Directory to store BUSCO results.
 # Will contain one subdirectory per genome
@@ -42,7 +42,7 @@ THREADS=16
 mkdir -p ${BUSCO_RESULTS}
 
 # Use a conda environment where all the required software are installed
-conda activate busco-phylo
+conda activate env-busco-phylo
 
 for genome in $GENOME_DIR/*.fasta; do
     PREFIX=$(basename ${genome} .fasta)
@@ -53,7 +53,7 @@ for genome in $GENOME_DIR/*.fasta; do
         continue
     fi
 
-    echo "Processing genome ${genome}..."
+    echo "# Start processing genome ${genome}..."
     busco \
         --in ${genome} \
         --lineage_dataset ${LINEAGE} \
@@ -62,7 +62,8 @@ for genome in $GENOME_DIR/*.fasta; do
         --out ${OUT_DIR} \
         --force \
         --cpu ${THREADS}
-    echo "Finished processing genome ${genome}"
+    echo "# Finished processing genome ${genome}"
+    echo ""
 
     # Clean up unnecessary directories and files
     find ${OUT_DIR} -name "logs" -o -name "tmp" -o -name "blast_db" | xargs rm -rf
@@ -73,5 +74,10 @@ for genome in $GENOME_DIR/*.fasta; do
     cd ..
 done
 
+# Extract BUSCO scores
+echo "# Extracting BUSCO scores..."
+python3 extract-busco-scores.py --directory busco_* > busco-scores.tsv
+
+# End
 conda deactivate
-echo "done"
+echo "# All done!"
