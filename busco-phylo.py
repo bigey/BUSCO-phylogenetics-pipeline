@@ -25,7 +25,7 @@ external_dependencies = ["mafft","clipkit","iqtree3"]
 
 def check_dependency(name):
     if shutil.which(name) is None:
-        logger.critical(f"Program {name} is required bu not in the PATH!")
+        logger.critical(f"Program {name} is required but not in the PATH!")
         logger.critical(f"Please install {name}.")
         sys.exit(1)
 
@@ -46,13 +46,13 @@ def main(args):
 
     # Check input parameters
     if stop_early and concordance:
-        print("Error! '--concordance' cannot be used with '--stop-early'")
+        logger.critical("'--concordance' cannot be used with '--stop-early'")
         sys.exit(1)
     elif stop_early and not supermatrix:
-        print("Error! '--stop-early' can only be used with '--supermatrix'")
+        logger.critical("'--stop-early' can only be used with '--supermatrix'")
         sys.exit(1)
     elif stop_early and supertree:
-        print("Error! '--stop-early' cannot be used with '--supertree'")
+        logger.critical("'--stop-early' cannot be used with '--supertree'")
         sys.exit(1)
 
     if concordance:
@@ -61,12 +61,12 @@ def main(args):
         logger.info("Option '--concordance' required automatic selection of both '--supermatrix' and '--supertree' options.")
 
     if not supermatrix and not supertree:
-        print("Error! Please select at least one of '--supermatrix' or '--supertree'")
+        logger.critical("Please select at least one of '--supermatrix' or '--supertree'")
         sys.exit(1)
 
     # Check input directory exists
     if not os.path.isdir(start_directory):
-        print("Error! " + start_directory + " is not a directory!")
+        logger.critical("" + start_directory + " is not a directory!")
         sys.exit(1)
 
     # Check if output directory already exists
@@ -185,7 +185,8 @@ def main(args):
             )
 
         # Align each BUSCO family
-        logger.info(f"Aligning protein sequences using {threads} threads, results to: {os.path.join(working_directory, 'alignments')}")
+        logger.info(f"Aligning protein sequences using {threads} threads...")
+        logger.info(f"Results will go to {os.path.join(working_directory, 'alignments')}")
         mp_commands = []
 
         for busco in single_copy_buscos:
@@ -196,13 +197,18 @@ def main(args):
                 ]
             )
 
-        pool = mp.Pool(processes=threads)
-        pool.map(run_mafft, mp_commands)
+        with mp.Pool(processes=threads) as pool:
+            results = pool.map(run_mafft, mp_commands)
+
+        if not all(results):
+            logger.critical(f"{results.count(False)} / {len(results)} mafft alignment jobs failed!")
+            sys.exit(1)
 
         logger.info("All alignment jobs finished!")
 
         # Trim resulting alignments
-        logger.info(f"Trimming alignments using {threads} threads, results to: {os.path.join(working_directory, 'trimmed_alignments')}")
+        logger.info(f"Trimming alignments using {threads} threads...")
+        logger.info(f"Results will go to {os.path.join(working_directory, 'trimmed_alignments')}")
         mp_commands = []
 
         for busco in single_copy_buscos:
@@ -217,8 +223,12 @@ def main(args):
                 ]
             )
 
-        pool = mp.Pool(processes=threads)
-        pool.map(run_clipkit, mp_commands)
+        with mp.Pool(processes=threads) as pool:
+            results = pool.map(run_clipkit, mp_commands)
+
+        if not all(results):
+            logger.critical(f"{results.count(False)} / {len(results)} clipkit trimming jobs failed!")
+            sys.exit(1)
 
         # Save the aligned sequence file path
         os.chdir(working_directory)
@@ -275,10 +285,14 @@ def main(args):
         # Test if supermatrix tree file already exist
         if not os.path.isfile("SUPERMATRIX.aln.fasta.treefile"):
             logger.info("Starting supermatrix analysis...")
-            logger.info("Concatenating all trimmed alignments...")
+            logger.info("Concatenating all trimmed alignments")
 
             os.chdir(os.path.join(working_directory, "trimmed_alignments"))
             alignments = {}
+
+            # Only read the trimmed alignments of the selected BUSCO genes,
+            #   ignoring any other file (e.g. leftover IQ-TREE outputs)
+            trimmed_files = [busco + ".trimmed.aln.fasta" for busco in single_copy_buscos]
 
             # Initialize alignments dictionary with all species as keys and empty strings as values
             for species in all_species:
@@ -286,7 +300,7 @@ def main(args):
 
             # If percent_single_copy is 1.0, we can simple just concatenate alignments
             if percent_single_copy == 1.0:
-                for alignment in os.listdir("."):
+                for alignment in trimmed_files:
                     # For each alignment file,
                     #   append the sequence to the corresponding species 
                     #   in the alignments dictionary
@@ -296,7 +310,7 @@ def main(args):
             # Else, we need to check if a species is missing from a family,
             # if so append with "-" to represent missing data
             else:
-                for alignment in os.listdir("."):
+                for alignment in trimmed_files:
                     # Keep track of which species are present or missing
                     missing_species = all_species[:]
 
@@ -309,16 +323,16 @@ def main(args):
                         #   we need to fill in the alignment with "-"
                         #   for those species to represent missing data
 
-                        # Get the length of the first alignment
-                        first_seq = SeqIO.parse(alignment, "fasta")
-                        seq_len = len(str(first_seq.seq))
+                        # Get the length of the first sequence in the alignment
+                        first_record = next(SeqIO.parse(alignment, "fasta"))
+                        seq_len = len(first_record.seq)
 
                         for species in missing_species:
                             #  fill with "-" character
                             alignments[species] += "-" * seq_len
 
-            # Write supermatrix alignment to file
-            logger.info(f"Writing supermatrix file to: {os.path.join(working_directory, 'SUPERMATRIX.aln.fasta')}")
+            # Write supermatrix alignment
+            logger.info(f"Supermatrix alignment file will go to {os.path.join(working_directory, 'SUPERMATRIX.aln.fasta')}")
             os.chdir(working_directory)
             seq_records = []
 
@@ -337,16 +351,19 @@ def main(args):
 
             # Imputing phylogenomic tree
             logger.info(f"Start species tree imputation using {threads} threads...")
-            logger.info(f"Species tree will go to: {os.path.join(working_directory, 'SUPERMATRIX.aln.fasta.treefile')}")
+            logger.info(f"Species tree will go to {os.path.join(working_directory, 'SUPERMATRIX.aln.fasta.treefile')}")
 
             # Test if outgroup option is set
             if outgroup is None:
-                subprocess.call(["iqtree3", "--undo", "-s", "SUPERMATRIX.aln.fasta", "--quiet", "-m", model, "-T", str(threads), "--ufboot", "1000"])
+                success = run_command(["iqtree3", "--undo", "-s", "SUPERMATRIX.aln.fasta", "--quiet", "-m", model, "-T", str(threads), "--ufboot", "1000"])
             else:
-                subprocess.call(["iqtree3", "--undo", "-s", "SUPERMATRIX.aln.fasta", "--quiet", "-o", outgroup, "-m", model, "-T", str(threads), "--ufboot", "1000"])
+                success = run_command(["iqtree3", "--undo", "-s", "SUPERMATRIX.aln.fasta", "--quiet", "-o", outgroup, "-m", model, "-T", str(threads), "--ufboot", "1000"])
+
+            if not success:
+                logger.critical("IQ-TREE supermatrix tree inference failed!")
+                sys.exit(1)
 
             logger.info("Supermatrix species tree imputation finished!")
-
         else:
             logger.warning("Supermatrix tree already present. Skiping this step...")
 
@@ -358,8 +375,8 @@ def main(args):
         # Test if concatenation tree file already exist
         if not os.path.isfile(os.path.join(working_directory, "ALL.trees")):
 
-            logger.info("Starting supertree analysis...")
-            logger.info(f"Generating a phylogenetic tree for each BUSCO gene/protein, {threads} threads used...")
+            logger.info("Generating a phylogenetic tree for each BUSCO gene/protein...")
+            logger.info(f"Using {threads} threads")
             iqtree_commands = []
 
             for busco in single_copy_buscos:
@@ -370,8 +387,11 @@ def main(args):
                     ]
                 )
 
-            pool = mp.Pool(processes=threads)
-            pool.map(run_iqtree, iqtree_commands)
+            with mp.Pool(processes=threads) as pool:
+                results = pool.map(run_iqtree, iqtree_commands)
+
+            if not all(results):
+                logger.warning(f"{results.count(False)} / {len(results)} gene tree inferences failed, these genes will be missing from ALL.trees")
 
             # Move all IQ-TREE generated files to trees folder
             os.makedirs("trees/iqtree_files", exist_ok=True)
@@ -383,7 +403,7 @@ def main(args):
                 shutil.move(str(f), "trees/iqtree_files")
 
             logger.info("All tree imputation jobs are finished")
-            logger.info(f"Concatenating all trees to: {os.path.join(working_directory, 'ALL.trees')}")
+            logger.info(f"Concatenating all trees to {os.path.join(working_directory, 'ALL.trees')}")
 
             with open("ALL.trees", "w") as out_f:
                 for tree_path in sorted(Path("trees").glob("*.treefile")):
@@ -399,22 +419,41 @@ def main(args):
             os.chdir(working_directory)
 
             # Calculate gCF and sCF using IQ-TREE
-            subprocess.call(["iqtree3", "--undo", "--quiet", "-te", "SUPERMATRIX.aln.fasta.treefile", "-s", "SUPERMATRIX.aln.fasta", "--gcf", "ALL.trees", "-m", model, "--scf", "1000", "--prefix", "concordance-factors"])
+            if not run_command(["iqtree3", "--undo", "--quiet", "-te", "SUPERMATRIX.aln.fasta.treefile", "-s", "SUPERMATRIX.aln.fasta", "--gcf", "ALL.trees", "-m", model, "--scf", "1000", "--prefix", "concordance-factors"]):
+                logger.critical("IQ-TREE concordance factor estimation failed!")
+                sys.exit(1)
 
-            logger.info("gCF and sCF estimation complete.")
-            logger.info(f"See annotated tree file: {os.path.join(working_directory, 'concordance-factors.cf.tree')}")
+            logger.info("Concordance factors (gCF/sCF) estimation complete.")
+            logger.info(f"See annotated tree file at {os.path.join(working_directory, 'concordance-factors.cf.tree')}")
         else:
             logger.warning("Concordance factor annotated tree already exists. Skiping this step...")
 
     # Final message
     logger.info("BUSCO phylogenomics pipeline complete!")
 
+def run_command(cmd, **kwargs):
+    # Run an external command, return True on success.
+    # On failure, log the exit code and captured output, return False.
+    # Never call sys.exit() here: this runs inside Pool workers.
+    kwargs.setdefault("stdout", subprocess.PIPE)
+    result = subprocess.run(cmd, stderr=subprocess.PIPE, text=True, **kwargs)
+
+    if result.returncode != 0:
+        logger.warning(f"Command failed (exit code {result.returncode}): {' '.join(cmd)}")
+        if isinstance(result.stdout, str) and result.stdout.strip():
+            logger.warning(f"stdout: {result.stdout.strip()}")
+        if result.stderr.strip():
+            logger.warning(f"stderr: {result.stderr.strip()}")
+        return False
+
+    return True
+
 def run_mafft(io):
     with open(io[1], "w") as fout:
-        subprocess.call(["mafft", "--quiet", "--thread", "1", io[0]], stdout=fout)
+        return run_command(["mafft", "--quiet", "--thread", "1", io[0]], stdout=fout)
 
 def run_clipkit(io):
-    subprocess.call(["clipkit", io[0], "--quiet", "--mode", "smart-gap", "--output", io[1]])
+    return run_command(["clipkit", io[0], "--quiet", "--mode", "smart-gap", "--output", io[1]])
 
 def run_iqtree(param):
     alignment = param[0]
@@ -422,14 +461,14 @@ def run_iqtree(param):
     outgrp = param[2]
 
     if outgrp is None:
-        subprocess.call(["iqtree3", "--undo", "--quiet", "-s", alignment, "-m", model, "-T", "1"])
+        return run_command(["iqtree3", "--undo", "--quiet", "-s", alignment, "-m", model, "-T", "1"])
     else:
-        subprocess.call(["iqtree3", "--undo", "--quiet", "-s", alignment, "-m", model, "-o", outgrp, "-T", "1"])
+        return run_command(["iqtree3", "--undo", "--quiet", "-s", alignment, "-m", model, "-o", outgrp, "-T", "1"])
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
-        description="Perform phylogenomic reconstruction using single-copy BUSCO genes."
+        description="Perform phylogenomic reconstruction using single-copy BUSCO proteins."
     )
     parser.add_argument(
         "--verbose",
@@ -451,7 +490,7 @@ if __name__ == "__main__":
         "--concordance",
         action="store_true",
         default=False,
-        help="Calculate concordance factors (gCF and sCF) for phylogenetic trees, automatic turn on --supermatrix and --supertree if not already selected",
+        help="Calculate concordance factors (gCF/sCF) for phylogenetic trees, automatic turn on --supermatrix and --supertree if not already selected",
     )
     parser.add_argument(
         "--stop-early",
@@ -463,7 +502,7 @@ if __name__ == "__main__":
         "--percent-single-copy",
         type=float,
         default=1.0,
-        help="Only keep BUSCO genes present in single copy in at least this fraction of the species (default 1.0, i.e. 100%)",
+        help="Only keep BUSCO proteins present in single copy in at least this fraction of the species (default 1.0, i.e. 100%)",
     )
     parser.add_argument(
         "--outgroup",
@@ -479,7 +518,10 @@ if __name__ == "__main__":
         help="Protein evolution model to use for tree inference (see IQ-TREE documentation, default to LG+R4+F model)",
     )
     parser.add_argument(
-        "--threads", type=int, default=8, help="Number of threads to use (default 8)"
+        "--threads", 
+        type=int, 
+        default=8, 
+        help="Number of threads to use (default 8)"
     )
     parser.add_argument(
         "--busco-dir",
@@ -488,7 +530,10 @@ if __name__ == "__main__":
         required=True,
     )
     parser.add_argument(
-        "--output-dir", type=str, help="Output directory to store results", required=True
+        "--output-dir", 
+        type=str, 
+        help="Output directory to store results", 
+        required=True
     )
     args = parser.parse_args()
 

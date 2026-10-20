@@ -114,11 +114,11 @@ def compute_metrics(args):
     # High bipartition support values are thought to be desirable because                                                                                                           
     #   they are indicative of greater certainty in tree topology
     out = run_command(["phykit", "bipartition_support_stats", tree_path])
-    metrics["abs"] = "NA"
+    metrics["bbs"] = "NA"
     if out:
         for line in out.splitlines():
             if "mean" in line.lower():
-                metrics["abs"] = line.split()[-1]
+                metrics["bbs"] = line.split()[-1]
                 break
 
     # Relative composition variability
@@ -131,7 +131,6 @@ def compute_metrics(args):
     # Lower LB scores are thought to be desirable because    
     #   they are indicative of taxa or trees that likely do
     #   not have issues with long branch attraction
-
     out = run_command(["phykit", "long_branch_score", tree_path])
     metrics["lbs"] = "NA"
     if out:
@@ -139,12 +138,6 @@ def compute_metrics(args):
             if "median" in line.lower():
                 metrics["lbs"] = line.split()[-1]
                 break
-
-    # Treeness statistic
-    # Higher treeness values are thought to be desirable because they
-    #   represent a higher signal-to-noise ratio
-    # out = run_command(["phykit", "treeness", tree_path])
-    # metrics["treeness"] = out.strip().split()[0] if out else "NA"
 
     # Saturation (second field: absolute value of saturation minus 1)
     # Lower values in the second column are indicative of values closer to one and, 

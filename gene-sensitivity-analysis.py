@@ -28,11 +28,11 @@ LOWER_IS_BETTER = {"rcv", "lbs", "saturation"}
 
 METRIC_ORDER = [
     "aln_len",
-    "abs",
+    "bbs",
     "rcv",
     "lbs",
-    "treeness",
     "saturation",
+    "treeness",
     "treeness_over_rcv",
 ]
 
