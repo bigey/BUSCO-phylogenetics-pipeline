@@ -52,6 +52,8 @@ def main(args):
     output_dir = os.path.abspath(args.output_dir)
     top_fraction = args.top_fraction
     model = args.model
+    outgroup = args.outgroup
+    outgroup = outgroup.replace(" ", "")
     threads = args.threads
     ref_tree = os.path.abspath(args.ref_tree) if args.ref_tree else None
 
@@ -118,7 +120,7 @@ def main(args):
     for metric in metrics_found:
         gene_values = genes_by_metric[metric]
         n_top = max(1, int(len(gene_values) * top_fraction))
-        jobs.append((metric, gene_values, aln_dir, output_dir, n_top, model, ref_tree, iqtree_threads))
+        jobs.append((metric, gene_values, aln_dir, output_dir, n_top, model, outgroup, ref_tree, iqtree_threads))
 
     logger.info(f"Running sensitivity analysis of the best scoring genes (top {top_fraction:.2f} fraction)")
     logger.info(f"Running {pool_size} parallel workers, {iqtree_threads} IQ-TREE thread(s) each")
@@ -143,7 +145,7 @@ def main(args):
 
 
 def run_metric(args):
-    metric, gene_values, aln_dir, output_dir, n_top, model, ref_tree, iqtree_threads = args
+    metric, gene_values, aln_dir, output_dir, n_top, model, outgroup, ref_tree, iqtree_threads = args
 
     # Sort: ascending for metrics where lower = better, descending otherwise
     t_genes = len(gene_values)
@@ -173,10 +175,17 @@ def run_metric(args):
     logger.debug(f"{metric}: alignment concatenated to {concat_fasta}")
 
     # Infer phylogenetic tree with IQ-TREE
-    subprocess.run(
-        ["iqtree3", "--quiet", "-s", concat_fasta, "-m", model, "--fast", "-T", str(iqtree_threads)],
-        capture_output=True
-    )
+    # Test if outgroup option is set
+    if outgroup is None:
+        subprocess.run(
+            ["iqtree3", "--quiet", "-s", concat_fasta, "-m", model, "-T", str(iqtree_threads), "--ufboot", "1000"],
+            capture_output=True
+        )
+    else:
+        subprocess.run(
+            ["iqtree3", "--quiet", "-s", concat_fasta, "-m", model, "-o", outgroup, "-T", str(iqtree_threads), "--ufboot", "1000"],
+            capture_output=True
+        )
 
     treefile = f"{concat_fasta}.treefile"
     if not os.path.isfile(treefile):
@@ -235,6 +244,10 @@ if __name__ == "__main__":
         "--model", type=str, default="LG+R4+F",
         help="IQ-TREE substitution model (default: LG+R4+F)"
     )
+    parser.add_argument(
+            "--outgroup", type=str, default=None, required=False,
+            help="List of outgroup species separated by a comma (default None)"
+        )
     parser.add_argument(
         "--threads", type=int, default=8,
         help="Number of parallel threads for running metrics concurrently (default: 8)"

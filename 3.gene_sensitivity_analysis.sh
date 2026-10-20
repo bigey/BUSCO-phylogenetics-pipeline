@@ -6,7 +6,8 @@ TRIMMED_ALIGNMENTS="Phylogenomics/trimmed_alignments"
 TREES_DIR="Phylogenomics/trees"
 OUTPUT_DIR="Phylogenomics"
 MODEL="LG+R4+F"
-TOP_FRACTION="0.50"
+OUTGROUP="DebSin_CBS10405"
+TOP_FRACTION="0.20"
 THREADS=64
 
 conda activate env-busco-phylo
@@ -21,10 +22,12 @@ python3 compute-gene-metrics.py \
     --trees ${TREES_DIR} \
     --output ${OUTPUT_DIR}/gene-metrics.tsv \
     --threads ${THREADS}
+echo "# Done!"
 
 # We generate a PDF file with metric distributions.
 echo "# Plot metric distributions..."
 python3 plot-gene-metrics.py --input ${OUTPUT_DIR}/gene-metrics.tsv --output ${OUTPUT_DIR}/gene-metrics.pdf
+echo "# Done!"
 
 # This script will perform a sensitivity analysis to assess how the choice of genes 
 #    (based on their information content, see above) affects the inferred phylogenetic tree. 
@@ -41,7 +44,9 @@ python3 gene-sensitivity-analysis.py \
     --output-dir ${OUTPUT_DIR}/gene-sensitivity-top-${TOP_FRACTION} \
     --top-fraction ${TOP_FRACTION} \
     --model ${MODEL} \
+    --outgroup ${OUTGROUP} \
     --threads ${THREADS}
+echo "# Done!"
 
 # End
 conda deactivate
