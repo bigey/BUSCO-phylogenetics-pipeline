@@ -24,16 +24,16 @@ The sensitivity analysis part of the pipeline (`compute-gene-metrics.py` and `ge
 
 The following softwares and packages should be installed to run the pipeline:
 
++ [BUSCO](https://busco.ezlab.org/)
++ [MAFFT](https://mafft.cbrc.jp/alignment/software/)
++ [ClipKIT](https://jlsteenwyk.com/ClipKIT/)
++ [PhyKIT](https://jlsteenwyk.com/PhyKIT/)
++ [IQ-TREE](https://iqtree.github.io/)
 + [Python3](https://www.python.org/)
 + [colorlog](https://pypi.org/project/colorlog/)
 + [pandas](https://pandas.pydata.org/)
 + [matplotlib](https://matplotlib.org/)
 + [BioPython](https://biopython.org/)
-+ [BUSCO](https://busco.ezlab.org/)
-+ [MAFFT](https://mafft.cbrc.jp/alignment/software/)
-+ [ClipKIT](https://jlsteenwyk.com/ClipKIT/)
-+ [IQ-TREE](https://iqtree.github.io/)
-+ [PhyKIT](https://jlsteenwyk.com/PhyKIT/)
 
 The simple way is to create a [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html) environment where all the dependencies are installed. A environment specification file `environment.yml` is provided for this purpose. You can create a dedicated conda environment with the following command:
 
@@ -99,12 +99,12 @@ The resulting supermatrix species tree (in newick format) is labeled with gene a
 At the end of the run, you will find the resulting alignments and trees in the `OUTPUT_DIRECTORY` directory:
 
 + `SUPERMATRIX.aln.fasta`: the concatenated supermatrix alignment,
-+ `ALL.trees`: the concatenated family protein trees,
 + `SUPERMATRIX.treefile`: the supermatrix tree with bootstrap support values (in newick format),
-+ `gcf.cf.tree`: the supermatrix tree labeled with gene concordance factor (gCF),
-+ `sCF.cf.tree`: the supermatrix tree labeled with sequence concordance factor (sCF).
++ `ALL.trees`: the concatenated family protein trees,
++ `concordance-factors.cf.tree`: the supermatrix tree labeled with gene concordance factor (gCF),
++ `concordance-factors.cf.stat`: the concordance factor statistics for each branch of the tree.
 
-Branch labels in the `SUPERMATRIX.treefile.cf.tree` file are formatted as follows:
+Branch labels in the `concordance-factors.cf.tree` file are formatted as follows:
 
 `(species1:branch_length,species2:branch_length)bootstrap/gCF/sCF:branch_length,`
 
@@ -123,6 +123,7 @@ Where `bootstrap` is the bootstrap support value for the branch, `gCF` is the ge
 + `--model`: protein evolution model to use for IQ-TREE phylogeny inference (see documentation, default to LG+R4+F)".
 + `--concordance`: run gene concordance factor analysis (automatic turns on `--supermatrix` and `--supertree` methods).
 + `--stop-early`: stop pipeline after generating concatenated alignment, only relevant with `--supermatrix` method, incompatible with `--supertree` and `--concordance`.
++ `--outgroup`: list of outgroup species separated by a comma.
 + `--threads`: number of threads to use (default = 8)
 
 ## Running BUSCO for multiple species (step 1)
@@ -186,7 +187,7 @@ TREES_DIR="Phylogenetics/trees"
 # Directory where gene sensitivity analysis results will be saved
 OUTPUT_DIR="Gene-sensitivity-analysis"
 # The fraction of genes to include in the analysis (e.g., 0.5 for the top 50% of best scoring genes)
-TOP_FRACTION=0.75                                     
+TOP_FRACTION=0.50                                     
 # The protein evolution model to use for IQ-TREE phylogeny inference (see IQ-TREE documentation for available models)
 MODEL="LG+R4+F"
 # The number of threads you want to allocate for the pipeline
@@ -204,7 +205,7 @@ bash -i 3.run_gene_sensitivity_analysis.sh
 First, the script computes several metrics for each gene tree. This script will read the trimmed alignments and their corresponding gene trees, and compute several metrics. Specifically, it will calculate:
 
 + Alignment length (`aln_len`): longer alignments are associated with greater phylogenetic signal
-+ Average bipartition support (`abs`): single-locus phylogenies that are better supported are thought to have more robust phylogenetic signal
++ Average bipartition support (`bbs`): single-locus phylogenies that are better supported are thought to have more robust phylogenetic signal
 + Relative composition variability (`rcv`): a measure of compositional bias wherein lower values are indicative of less bias
 + Median long branch score (`lbs`): lower scores are more desirable because they are indicative of phylogenetic trees less susceptible to long branch attraction artifacts
 + Treeness (`treeness`): a measure of the amount of phylogenetic signal in a gene tree; higher values are more desirable because they indicate that a greater proportion of the total tree length is attributable to internal branches, which are more likely to reflect true evolutionary relationships rather than noise or artifacts.
@@ -252,8 +253,10 @@ python3 gene-sensitivity-analysis.py \
 
 All resulting files are saved in a directory (`--output-dir`) for further analysis. The main output files include:
 
-+ `rf-distances.tsv`: a TSV file containing the Robinson-Foulds distances between the reference tree and the trees inferred using subsets of genes.
-+ `<metric>.treefile`: the resulting trees inferred using subsets of genes based on the specified metric (e.g., `aln_len.treefile`, `abs.treefile`, etc.).
++ `<metric>.gene_list.txt`: the list of the top scored BUSCO proteins retain for the analysis,
++ `<metric>.fa`: the corresponding multi-sequence alignment,
++ `<metric>.fa.treefile`: the resulting tree inferred,
++ `rf-distances.tsv`: a TSV file containing for each metric, the Robinson-Foulds distances between the reference tree and the infered tree: (4 columns: `metric_name[TAB]total_protein[TAB]selected_protein[TAB]rf_distance[TAB]normalized_rf`)
 
 ## Citation
 
