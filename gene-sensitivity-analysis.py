@@ -28,7 +28,7 @@ LOWER_IS_BETTER = {"rcv", "lbs", "saturation"}
 
 METRIC_ORDER = [
     "aln_len",
-    "bbs",
+    "bss",
     "rcv",
     "lbs",
     "saturation",

@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 
 METRIC_ORDER = [
     "aln_len",
-    "bbs",
+    "bss",
     "rcv",
     "lbs",
     "treeness",
@@ -32,7 +32,7 @@ METRIC_ORDER = [
 
 METRIC_LABELS = {
     "aln_len":           "Alignment length",
-    "bbs":               "Bipartition support",
+    "bss":               "Bipartition support stats",
     "rcv":               "Relative composition\nvariability (RCV)",
     "lbs":               "Median long-branch\nscore (LBS)",
     "treeness":          "Treeness",

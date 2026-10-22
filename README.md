@@ -164,7 +164,7 @@ THREADS=16                    # Number of threads you want to allocate for the p
 ```
 
 Then run the script (use `-i` option to activate the conda environment):
-
+s_protei
 ```shell
 bash -i 2.run_busco-phylogenomics.sh
 ```
@@ -173,7 +173,7 @@ bash -i 2.run_busco-phylogenomics.sh
 
 The third step involves performing a gene sensitivity analysis to evaluate the impact of the number of genes included in the analysis on the resulting species tree topology.
 
-The script will first compute several metrics for each gene tree (alignment length, average bipartition support, relative composition variability, median long branch score, treeness, saturation, and treeness/RCV ratio). Then it will subset the genes based on the specified metric and fraction (e.g., top 50% of genes based on alignment length), infer new trees using the subseted genes, and compare the resulting trees to the reference tree (in this case, the supermatrix tree) using the Robinson-Foulds distance metric. The results will be saved in the specified output directory for further analysis.
+The script will first compute several metrics for each gene tree (alignment length, bipartition support, relative composition variability, median long branch score, treeness, saturation, and treeness/RCV ratio). Then it will subset the genes based on the specified metric and fraction (e.g., top 50% of genes based on alignment length), infer new trees using the subseted genes, and compare the resulting trees to the reference tree (in this case, the supermatrix tree) using the Robinson-Foulds distance metric. The results will be saved in the specified output directory for further analysis.
 
 The script `3.run_gene_sensitivity_analysis.sh` is a wrapper to run the complete gene sensitivity analysis with the desired parameters.
 
@@ -202,10 +202,10 @@ bash -i 3.run_gene_sensitivity_analysis.sh
 
 ### 1. Compute gene metrics
 
-First, the script computes several metrics for each gene tree. This script will read the trimmed alignments and their corresponding gene trees, and compute several metrics. Specifically, it will calculate:
+First, the script computes several metrics for each gene tree. This script will read the trimmed alignments and their corresponding gene trees, and compute several metrics using [PhyKIT](https://jlsteenwyk.com/PhyKIT/). Specifically, it will calculate:
 
 + Alignment length (`aln_len`): longer alignments are associated with greater phylogenetic signal
-+ Average bipartition support (`bbs`): single-locus phylogenies that are better supported are thought to have more robust phylogenetic signal
++ Bipartition support statistics (`bss`): single-locus phylogenies that are better supported are thought to have more robust phylogenetic signal
 + Relative composition variability (`rcv`): a measure of compositional bias wherein lower values are indicative of less bias
 + Median long branch score (`lbs`): lower scores are more desirable because they are indicative of phylogenetic trees less susceptible to long branch attraction artifacts
 + Treeness (`treeness`): a measure of the amount of phylogenetic signal in a gene tree; higher values are more desirable because they indicate that a greater proportion of the total tree length is attributable to internal branches, which are more likely to reflect true evolutionary relationships rather than noise or artifacts.
@@ -222,7 +222,7 @@ python3 compute-gene-metrics.py \
 
 The results are saved in a TSV file for further analysis (`${OUTPUT_DIR}/gene-metrics.tsv`).
 
-This file contains three columns: `gene`, `metric`, and `value`. The `gene` column contains the name of the gene, the `metric` column contains the name of the metric (e.g., `aln_len`, `abs`, etc.), and the `value` column contains the corresponding value for that metric.
+This file contains three columns: `gene`, `metric`, and `value`. The `gene` column contains the name of the gene, the `metric` column contains the name of the metric (e.g., `aln_len`, `bss`, etc.), and the `value` column contains the corresponding value for that metric.
 
 The file is used to plot the distribution of each metric across all genes (script `plot-gene-metrics.py`), and to perform gene sensitivity analysis by subsetting genes based on their metric values.
 

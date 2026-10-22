@@ -111,11 +111,11 @@ def compute_metrics(args):
     # High bipartition support values are thought to be desirable because                                                                                                           
     #   they are indicative of greater certainty in tree topology
     out = run_command(["phykit", "bipartition_support_stats", tree_path, "--threads", "1"])
-    metrics["bbs"] = "NA"
+    metrics["bss"] = "NA"
     if out:
         for line in out.splitlines():
             if "mean" in line.lower():
-                metrics["bbs"] = line.split()[-1]
+                metrics["bss"] = line.split()[-1]
                 break
 
     # Relative composition variability
