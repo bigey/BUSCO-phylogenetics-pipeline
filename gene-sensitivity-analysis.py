@@ -86,20 +86,28 @@ def main(args):
     with open(input_file) as fh:
         for line in fh:
             line = line.rstrip("\n")
+
             if not line:
                 continue
+
             parts = line.split("\t")
+
             if len(parts) != 3:
                 continue
+
             gene, metric, value = parts
+
             if metric not in METRIC_ORDER:
                 continue
+
             try:
                 value = float(value)
             except ValueError:
                 continue
+
             if metric not in genes_by_metric:
                 genes_by_metric[metric] = []
+            
             genes_by_metric[metric].append((gene, value))
 
     if not genes_by_metric:
@@ -174,16 +182,16 @@ def run_metric(args):
 
     logger.debug(f"{metric}: alignment concatenated to {concat_fasta}")
 
-    # Infer phylogenetic tree with IQ-TREE
+    # Infer phylogenetic tree with --fast seach option
     # Test if outgroup option is set
     if outgroup is None:
         subprocess.run(
-            ["iqtree3", "--quiet", "-s", concat_fasta, "-m", model, "-T", str(iqtree_threads), "--ufboot", "1000"],
+            ["iqtree3", "--fast", "--quiet", "-s", concat_fasta, "-m", model, "-T", str(iqtree_threads)],
             capture_output=True
         )
     else:
         subprocess.run(
-            ["iqtree3", "--quiet", "-s", concat_fasta, "-m", model, "-o", outgroup, "-T", str(iqtree_threads), "--ufboot", "1000"],
+            ["iqtree3", "--fast", "--quiet", "-s", concat_fasta, "-m", model, "-o", outgroup, "-T", str(iqtree_threads)],
             capture_output=True
         )
 
@@ -199,7 +207,7 @@ def run_metric(args):
 
     # Compute Robinson-Foulds distance against reference tree
     if ref_tree:
-        out = run_command(["phykit", "robinson_foulds_distance", ref_tree, treefile])
+        out = run_command(["phykit", "robinson_foulds_distance", ref_tree, treefile, "--threads", "1"])
         if out:
             plain_rf = out.strip().split()[0]
             norma_rf = out.strip().split()[1]

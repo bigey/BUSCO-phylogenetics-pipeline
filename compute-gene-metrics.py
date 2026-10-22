@@ -39,9 +39,6 @@ def main(args):
     output_file = os.path.abspath(args.output)
     threads = args.threads
 
-    # Limit internal threading in phykit (OpenMP) to 1 per process
-    os.environ['OMP_NUM_THREADS'] = '1'
-
     # Validate input directories
     if not os.path.isdir(aln_dir):
         logger.critical(f"{aln_dir} is not a directory!")
@@ -107,13 +104,13 @@ def compute_metrics(args):
 
     # Alignment length
     # Longer alignments are associated with strong phylogenetic signal
-    out = run_command(["phykit", "alignment_length", aln_path])
+    out = run_command(["phykit", "alignment_length", aln_path, "--threads", "1"])
     metrics["aln_len"] = out.strip().split()[0] if out else "NA"
 
     # Bipartition support (mean from multi-line output)
     # High bipartition support values are thought to be desirable because                                                                                                           
     #   they are indicative of greater certainty in tree topology
-    out = run_command(["phykit", "bipartition_support_stats", tree_path])
+    out = run_command(["phykit", "bipartition_support_stats", tree_path, "--threads", "1"])
     metrics["bbs"] = "NA"
     if out:
         for line in out.splitlines():
@@ -124,7 +121,7 @@ def compute_metrics(args):
     # Relative composition variability
     # Lower RCV values are thought to be desirable because they represent
     #   a lower composition bias in an alignment
-    out = run_command(["phykit", "relative_composition_variability", aln_path])
+    out = run_command(["phykit", "relative_composition_variability", aln_path, "--threads", "1"])
     metrics["rcv"] = out.strip().split()[0] if out else "NA"
 
     # Long-branch scores (median from multi-line output)
@@ -142,7 +139,7 @@ def compute_metrics(args):
     # Saturation (second field: absolute value of saturation minus 1)
     # Lower values in the second column are indicative of values closer to one and, 
     #   thus, less saturation
-    out = run_command(["phykit", "saturation", "-a", aln_path, "-t", tree_path])
+    out = run_command(["phykit", "saturation", "-a", aln_path, "-t", tree_path, "--threads", "1"])
     metrics["saturation"] = "NA"
     if out:
         parts = out.strip().split()
@@ -155,7 +152,7 @@ def compute_metrics(args):
     #   to composition bias
     # Higher treeness values are thought to be desirable because they
     #   represent a higher signal-to-noise ratio
-    out = run_command(["phykit", "treeness_over_rcv", "-a", aln_path, "-t", tree_path])
+    out = run_command(["phykit", "treeness_over_rcv", "-a", aln_path, "-t", tree_path, "--threads", "1"])
     metrics["treeness_over_rcv"] = "NA"
     metrics["treeness"] = "NA"
     if out:
