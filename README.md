@@ -164,7 +164,7 @@ THREADS=16                    # Number of threads you want to allocate for the p
 ```
 
 Then run the script (use `-i` option to activate the conda environment):
-s_protei
+
 ```shell
 bash -i 2.run_busco-phylogenomics.sh
 ```

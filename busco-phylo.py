@@ -420,7 +420,7 @@ def main(args):
             os.chdir(working_directory)
 
             # Calculate gCF and sCF using IQ-TREE
-            if not run_command(["iqtree3", "--undo", "--quiet", "-te", "SUPERMATRIX.aln.fasta.treefile", "-s", "SUPERMATRIX.aln.fasta", "--gcf", "ALL.trees", "-m", model, "--scf", "1000", "--prefix", "concordance-factors", "-T", threads]):
+            if not run_command(["iqtree3", "--undo", "--quiet", "-te", "SUPERMATRIX.aln.fasta.treefile", "-s", "SUPERMATRIX.aln.fasta", "--gcf", "ALL.trees", "-m", model, "--scf", "1000", "--prefix", "concordance-factors", "-T", str(threads)]):
                 logger.critical("IQ-TREE concordance factor estimation failed!")
                 sys.exit(1)
 
