@@ -1,6 +1,8 @@
 # BUSCO Phylogenomics pipeline
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/) [![Claude](https://img.shields.io/badge/AI%20assisted-Claude-orange?logo=anthropic)](https://claude.ai)
+[![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)
+[![Claude](https://img.shields.io/badge/AI%20assisted-Claude-orange?logo=anthropic)](https://claude.ai)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Presentation
 
@@ -112,8 +114,8 @@ Where `bootstrap` is the bootstrap support value for the branch, `gCF` is the ge
 
 ### `busco-phylo.py` required parameters
 
-+ `--directory`: input directory containing BUSCO results (each link should be named `run_[species]` and point to the corresponding BUSCO `run_[lineage]_odb[XX]` sub-directory)
-+ `--output`: phylogenetic output directory
++ `--busco-dir`: input directory containing BUSCO results (each link should be named `run_[species]` and point to the corresponding BUSCO `run_[lineage]_odb[XX]` sub-directory)
++ `--output-dir`: phylogenetic output directory
 + `--supermatrix`: choose to run supermatrix method
 + `--supertree`: choose to run supertree method
 
@@ -247,6 +249,7 @@ python3 gene-sensitivity-analysis.py \
   --output-dir ${OUTPUT_DIR}/gene-sensitivity-top-${TOP_FRACTION} \
   --top-fraction ${TOP_FRACTION} \
   --model ${MODEL} \
+  --outgroup ${OUTGROUP} \
   --ref-tree ${OUTPUT_DIR}/SUPERMATRIX.aln.fasta.treefile \
   --threads ${THREADS}
 ```
