@@ -81,7 +81,7 @@ You can use the `--stop-early` option which stops the pipeline just after genera
 To perform a supertree analysis, use the following command:
 
 ```shell
-python3 busco-phylo.py --directory BUSCO_RESULTS --output OUTPUT_DIRECTORY --supertree --threads 8
+python3 busco-phylo.py --busco-dir BUSCO_RESULTS --output-dir OUTPUT_DIRECTORY --supertree --threads 8
 ```
 
 This command performs alignment and phylogenetic inference for each single-copy BUSCO protein family separately and then combines the individual trees into a  concatenated species trees file `ALL.trees`. All the data will be saved in the output directory (`OUTPUT_DIRECTORY`).
@@ -93,7 +93,7 @@ A species tree could be inferred using a coalescent-based approach that can acco
 To run both supermatrix and supertree methods and perform concordance factor analysis (gCF and sCF), use the following command:
 
 ```shell
-python3 busco-phylo.py --directory BUSCO_RESULTS --output OUTPUT_DIRECTORY --supermatrix --supertree --concordance --threads 8
+python3 busco-phylo.py --busco-dir BUSCO_RESULTS --output-dir OUTPUT_DIRECTORY --supermatrix --supertree --concordance --threads 8
 ```
 
 The resulting supermatrix species tree (in newick format) is labeled with gene and sequence concordance factors (`gCF` and `sCF`). This can provide insights into the level of gene tree discordance and the robustness of the inferred species tree.
